@@ -1,0 +1,7 @@
+{
+  "ServerIP": "10.0.0.22",
+  "LockerServicePort": 8022,
+  "Curve": "NIST192p",
+  "ServerVerifyingKey": "f072061536b1cef80964dfa9f4d58019e7f5487a029198dd104fe6fc7404f9383d711763df31097510ad8c5dd533d91e",
+  "LockerAppSSHPort": 2280
+}

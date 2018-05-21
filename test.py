@@ -1,13 +1,13 @@
+import json
 import socket
+import subprocess
 import sys
 import paramiko
 
 
 LOGGED_IN = False
-HOST = '10.0.0.21'
-PORT = 2280
-USERNAME = 'user'
-PASSWORD = 'pass'
+USERNAME = 'user1'
+PASSWORD = 'user111'
 
 
 # this code is a snippet from paramiko/demos/interactive.py
@@ -42,17 +42,26 @@ def windows_shell(chan):
     except OSError:
         # socket closed
         LOGGED_IN = False
-        pass
+    except socket.error:
+        # socket closed
+        LOGGED_IN = False
 
 
 def main():
     global LOGGED_IN
+    with open('locker_server_params.json', 'r') as f:
+        params = json.load(f)
+
+    try:
+        p = subprocess.Popen(['python3', 'user_locker_service.py', params['ServerIP'], str(params['LockerServicePort']),
+                              params['Curve'], params['ServerVerifyingKey']])
+    except KeyError:
+        sys.exit(0)
 
     try:
         ssh_conn = paramiko.SSHClient()
         ssh_conn.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-        # ssh_conn.connect(HOST, port=PORT, username=USERNAME, password=PASSWORD)
-        ssh_conn.connect(HOST, port=PORT, username=USERNAME, password=PASSWORD)
+        ssh_conn.connect(params['ServerIP'], port=params['LockerAppSSHPort'], username=USERNAME, password=PASSWORD)
         LOGGED_IN = True
 
     except paramiko.AuthenticationException:
@@ -61,10 +70,10 @@ def main():
     else:
         chan = ssh_conn.invoke_shell()
         windows_shell(chan)
-        # b'b\x00\x00\x00\x00\x00\x00\x00\x04exec\x01\x00\x00\x00\x02ls'
-        # stdin, stdout, stderr = ssh_conn.exec_command('ls')
-        # print(stdout.read())
         ssh_conn.close()
+
+    p.kill()
+    sys.exit(0)
 
 
 if __name__ == '__main__':
