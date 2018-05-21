@@ -2,6 +2,152 @@
 <!-- Generated with glade 3.19.0 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
+  <object class="GtkDialog" id="dialog_enter_password">
+    <property name="can_focus">False</property>
+    <property name="type">popup</property>
+    <property name="type_hint">dialog</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dialog_vbox_enter_password">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog_action_area_enter_password">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="button_enter_password_ok">
+                <property name="label" translatable="yes">OK</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="always_show_image">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button_enter_password_cancel">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="always_show_image">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="vbox_enter_password_inner">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkLabel" id="label_enter_password">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Please enter your password</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="entry_enter_password">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="visibility">False</property>
+                <property name="invisible_char">●</property>
+                <property name="input_purpose">password</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="padding">3</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkFileChooserDialog" id="filechooserdialog_upload">
+    <property name="can_focus">False</property>
+    <property name="type">popup</property>
+    <property name="icon_name">document-new-symbolic</property>
+    <property name="type_hint">dialog</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="filechooserdialog_vbox_upload">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="filechooserdialog_action_area_upload">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="button_upload_ok">
+                <property name="label" translatable="yes">OK</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="always_show_image">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button_upload_cancel">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="always_show_image">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkImage" id="icon_back">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -45,6 +191,8 @@
   </object>
   <object class="GtkApplicationWindow" id="applicationwindow_login">
     <property name="can_focus">False</property>
+    <property name="margin_left">5</property>
+    <property name="margin_right">5</property>
     <property name="icon_name">changes-prevent</property>
     <child>
       <object class="GtkBox" id="vbox_login">
@@ -181,7 +329,7 @@
                 <property name="image">icon_login</property>
                 <property name="focus_on_click">False</property>
                 <property name="always_show_image">True</property>
-                <signal name="activate" handler="on_button_login_activate" swapped="no"/>
+                <signal name="clicked" handler="on_button_login_clicked" object="applicationwindow_login" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -260,6 +408,8 @@
   </object>
   <object class="GtkApplicationWindow" id="applicationwindow_main">
     <property name="can_focus">False</property>
+    <property name="margin_left">1</property>
+    <property name="margin_right">1</property>
     <property name="icon_name">changes-prevent</property>
     <child>
       <object class="GtkBox" id="vbox_main">
@@ -288,7 +438,6 @@
                         <property name="image">icon_logout</property>
                         <property name="use_stock">False</property>
                         <property name="always_show_image">True</property>
-                        <signal name="activate" handler="on_imagemenuitem_logout_activate" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -313,7 +462,6 @@
                         <property name="image">icon_help</property>
                         <property name="use_stock">False</property>
                         <property name="always_show_image">True</property>
-                        <signal name="activate" handler="on_imagemenuitem_help_activate" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -351,7 +499,6 @@
                         <property name="image">icon_home</property>
                         <property name="focus_on_click">False</property>
                         <property name="always_show_image">True</property>
-                        <signal name="activate" handler="on_button_home_activate" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -368,7 +515,6 @@
                         <property name="image">icon_back</property>
                         <property name="focus_on_click">False</property>
                         <property name="always_show_image">True</property>
-                        <signal name="activate" handler="on_button_back_activate" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -428,8 +574,6 @@
                     <property name="can_focus">True</property>
                     <property name="model">liststore_file_explorer</property>
                     <property name="search_column">0</property>
-                    <signal name="button-press-event" handler="on_treeview_file_explorer_button_press_event" swapped="no"/>
-                    <signal name="button-release-event" handler="on_treeview_file_explorer_button_release_event" swapped="no"/>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection" id="treeview_selection_file_explorer"/>
                     </child>
@@ -518,7 +662,6 @@
                         <property name="receives_default">True</property>
                         <property name="image">icon_create_dir</property>
                         <property name="always_show_image">True</property>
-                        <signal name="activate" handler="on_button_create_dir_activate" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -535,7 +678,6 @@
                         <property name="image">icon_upload</property>
                         <property name="focus_on_click">False</property>
                         <property name="always_show_image">True</property>
-                        <signal name="activate" handler="on_button_upload_activate" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -832,7 +974,6 @@
                         <property name="image">icon_confirm_changes</property>
                         <property name="focus_on_click">False</property>
                         <property name="always_show_image">True</property>
-                        <signal name="activate" handler="on_button_confirm_changes_activate" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -999,7 +1140,6 @@
         <property name="tooltip_text" translatable="yes">Delete selected directory</property>
         <property name="label" translatable="yes">Delete</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_menuitem_dir_delete_activate" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1009,7 +1149,6 @@
         <property name="tooltip_text" translatable="yes">Edit permissions of selected directory</property>
         <property name="label" translatable="yes">Edit Permissions</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_menuitem_permit_activate" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1019,7 +1158,6 @@
         <property name="tooltip_text" translatable="yes">Show info of selected directroy</property>
         <property name="label" translatable="yes">Show Info</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_menuitem_show_info_activate" swapped="no"/>
       </object>
     </child>
   </object>
@@ -1033,7 +1171,6 @@
         <property name="tooltip_text" translatable="yes">Delete selected file</property>
         <property name="label" translatable="yes">Delete</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_menuitem_file_delete_activate" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1043,7 +1180,6 @@
         <property name="tooltip_text" translatable="yes">Download selected file</property>
         <property name="label" translatable="yes">Download</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_menuitem_file_download_activate" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1053,7 +1189,6 @@
         <property name="tooltip_text" translatable="yes">Edit permissions of selected file</property>
         <property name="label" translatable="yes">Edit Permissions</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_menuitem_permit_activate" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1063,7 +1198,6 @@
         <property name="tooltip_text" translatable="yes">Show info of selected file</property>
         <property name="label" translatable="yes">Show Info</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_menuitem_show_info_activate" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1073,7 +1207,6 @@
         <property name="tooltip_text" translatable="yes">Lock file with password</property>
         <property name="label" translatable="yes">Lock</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_menuitem_file_lock_activate" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1083,7 +1216,6 @@
         <property name="tooltip_text" translatable="yes">Unlock file with password</property>
         <property name="label" translatable="yes">Unlock</property>
         <property name="use_underline">True</property>
-        <signal name="activate" handler="on_menuitem_file_unlock_activate" swapped="no"/>
       </object>
     </child>
   </object>

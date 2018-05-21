@@ -1,49 +1,35 @@
+import json
+import socket
+import subprocess
 import paramiko
-import re
 
 
-USERNAME = 'user1'
-PASSWORD = 'user111'
+class User:
+    def __init__(self, server_ip, local_scp_port, curve, server_verifying_key, server_ssh_port):
+        self._ip = server_ip
+        self._local_port = local_scp_port
+        self._curve = curve
+        self._server_verifying_key = server_verifying_key
+        self._port = server_ssh_port
 
-ssh_conn = paramiko.SSHClient()
-ssh_conn.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-ssh_conn.connect('10.0.0.21', username=USERNAME, password=PASSWORD)
+        self._locker_service_proc = subprocess.Popen(['python3', 'user_locker_service.py', self._ip, self._local_port,
+                                                      self._curve, self._server_verifying_key])
 
-chan = ssh_conn.invoke_shell()
+        self._ssh_conn = None
+        self._shell_channel = None
 
+    def login(self, username, password):
+        self._ssh_conn = paramiko.SSHClient()
+        self._ssh_conn.set_missing_host_key_policy(paramiko.AutoAddPolicy)
 
-def run_cmd(cmd):
-    buff = b''
+        try:
+            self._ssh_conn.connect(self._ip, username, password)
 
-    # while re.match(USERNAME+'\|locker:(.+)\$')
-    while not buff.endswith(b'$ '):
-        resp = chan.recv(4096)
-        buff += resp
-        print(resp)
+        except paramiko.AuthenticationException:
+            return False
 
-    chan.send(cmd+'\n')
+        self._shell_channel = self._ssh_conn.invoke_shell()
 
-    # buff = b''
-    # while not buff.endswith(b'Enter password: '):
-    #     resp = chan.recv(4096)
-    #     buff += resp
-    #     print(resp)
-    #
-    # chan.send(PASSWORD+'\n')
+        return True
 
-    buff = b''
-    while not buff.endswith(b'$ '):
-        resp = chan.recv(4096)
-        buff += resp
-        print(resp)
-
-    ssh_conn.close()
-
-
-def main():
-    run_cmd('upload "C:\\Users\\jonat\\Downloads\\Installs\\Git-2.16.1-64-bit.exe" dir1')
-
-
-if __name__ == '__main__':
-    main()
-
+    def run(self):

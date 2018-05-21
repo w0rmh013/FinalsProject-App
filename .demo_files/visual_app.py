@@ -6,9 +6,25 @@ from gi.repository import Gtk, Gdk
 builder = Gtk.Builder()
 builder.add_from_file('app_design_new.glade')
 
+LOGGED_IN = False
+
 
 # Button signal handlers
-def on_button_confirm_changes_activate():
+def on_button_login_activate(applicationwindow_login):
+    global LOGGED_IN
+    entry_username = builder.get_object('entry_username')
+    entry_password = builder.get_object('entry_password')
+    print(entry_username.get_text(), entry_password.get_text())
+    LOGGED_IN = True
+    if LOGGED_IN:
+        applicationwindow_login.destroy()
+
+
+def on_button_home_activate():
+    pass
+
+
+def on_button_back_activate():
     pass
 
 
@@ -20,15 +36,7 @@ def on_button_create_dir_activate():
     pass
 
 
-def on_button_home_activate():
-    pass
-
-
-def on_button_back_activate():
-    pass
-
-
-def on_button_login_activate():
+def on_button_confirm_changes_activate():
     pass
 
 # End of Button signal handlers
@@ -104,12 +112,12 @@ def on_treeview_file_explorer_button_release_event(treeview, event):
 
 def main():
     handlers = {
-        'on_button_confirm_changes_activate': on_button_confirm_changes_activate,
+        'on_button_login_activate': on_button_login_activate,
         'on_button_upload_activate': on_button_upload_activate,
-        'on_button_create_dir_activate': on_button_create_dir_activate,
         'on_button_home_activate': on_button_home_activate,
         'on_button_back_activate': on_button_back_activate,
-        'on_button_login_activate': on_button_login_activate,
+        'on_button_create_dir_activate': on_button_create_dir_activate,
+        'on_button_confirm_changes_activate': on_button_confirm_changes_activate,
         'on_imagemenuitem_logout_activate': on_imagemenuitem_logout_activate,
         'on_imagemenuitem_help_activate': on_imagemenuitem_help_activate,
         'on_menuitem_permit_activate': on_menuitem_permit_activate,
@@ -122,23 +130,23 @@ def main():
         'on_treeview_file_explorer_button_press_event': on_treeview_file_explorer_button_press_event,
         'on_treeview_file_explorer_button_release_event': on_treeview_file_explorer_button_release_event
     }
-
-    # builder = Gtk.Builder()
-    # builder.add_from_file('app_design_new.glade')
     builder.connect_signals(handlers)
 
-    # window = builder.get_object('applicationwindow_login')
-    # window.set_default_size(300, 225)
-    # window.set_title('Locker Login')
-    # window.connect('destroy', Gtk.main_quit)
-    # window.show_all()
-    # Gtk.main()
-
-    window = builder.get_object('applicationwindow_main')
-    window.set_default_size(600, 450)
+    # login window
+    window = builder.get_object('applicationwindow_login')
+    window.set_default_size(300, 225)
+    window.set_title('Locker Login')
     window.connect('destroy', Gtk.main_quit)
     window.show_all()
     Gtk.main()
+
+    # main window
+    if LOGGED_IN:
+        window = builder.get_object('applicationwindow_main')
+        window.set_default_size(600, 450)
+        window.connect('destroy', Gtk.main_quit)
+        window.show_all()
+        Gtk.main()
 
 
 if __name__ == '__main__':
