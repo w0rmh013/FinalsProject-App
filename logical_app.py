@@ -69,7 +69,7 @@ class User:
                 break
 
             self._input = self.input_queue.get()
-            self._shell_channel.send(self._input + '\n')
+            self._shell_channel.send(self._input[0] + '\n')
 
             # use instead of blocking acquire, because if we logout we want the program to end
             while not self.output_lock.acquire():
@@ -83,17 +83,19 @@ class User:
 
             self.output_lock.release()
             # the last character of the output is always '\0', we trim it
-            self.output_queue.put((self._input, self._output[:-1].strip()))
+            self.output_queue.put((self._input[1], self._output[:-1].strip()))
 
         self.close()
 
-    def exec_command(self, command):
-        self.input_queue.put(command)
+    def exec_command(self, command, func):
+        # add command to input queue, func will be used with the output
+        self.input_queue.put((command, func))
 
     def handle_output(self):
         while self.logged_in:
             while not self.output_queue.empty():
-                print(self.output_queue.get())
+                func, data = self.output_queue.get()
+                func(data)
 
     def close(self):
         self._locker_service_proc.kill()

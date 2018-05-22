@@ -54,6 +54,7 @@
           <object class="GtkBox" id="vbox_enter_password_inner">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="valign">center</property>
             <property name="orientation">vertical</property>
             <property name="spacing">3</property>
             <child>
@@ -196,6 +197,7 @@
       <object class="GtkBox" id="vbox_login">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="valign">center</property>
         <property name="orientation">vertical</property>
         <property name="spacing">5</property>
         <child>
@@ -383,6 +385,8 @@
       <column type="gchararray"/>
       <!-- column-name size -->
       <column type="gint64"/>
+      <!-- column-name type -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkListStore" id="liststore_shared_file_explorer">
@@ -563,6 +567,8 @@
                     <property name="can_focus">True</property>
                     <property name="model">liststore_file_explorer</property>
                     <property name="search_column">0</property>
+                    <signal name="button-press-event" handler="on_treeview_file_explorer_button_press_event" swapped="no"/>
+                    <signal name="button-release-event" handler="on_treeview_file_explorer_button_release_event" swapped="no"/>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection" id="treeview_selection_file_explorer"/>
                     </child>
@@ -627,6 +633,17 @@
                           <object class="GtkCellRendererText" id="cellrenderer_size"/>
                           <attributes>
                             <attribute name="text">4</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="treeview_column_type">
+                        <property name="title" translatable="yes">Type</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderer_type"/>
+                          <attributes>
+                            <attribute name="text">5</attribute>
                           </attributes>
                         </child>
                       </object>

@@ -20,13 +20,7 @@ class AppMain:
         self._user_output_thread = threading.Thread(target=self._user.handle_output)
         self._user_output_thread.start()
 
-        self._user.exec_command('ls')
-        self._user.exec_command('space')
-        self._user.exec_command('info')
-        self._user.exec_command('create dir1')
-        self._user.exec_command('cd dir1')
-        self._user.exec_command('info')
-        self._user.exec_command('ls user1@/')
+        self._user.exec_command('ls /', self._handler.update_treeview_file_explorer)
 
         self._main_window = self._builder.get_object('applicationwindow_main')
         self._main_window.set_default_size(600, 450)
