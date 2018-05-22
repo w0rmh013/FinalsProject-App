@@ -174,6 +174,11 @@
     <property name="can_focus">False</property>
     <property name="icon_name">folder-symbolic</property>
   </object>
+  <object class="GtkImage" id="icon_go">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="icon_name">pan-end-symbolic</property>
+  </object>
   <object class="GtkImage" id="icon_help">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -331,6 +336,7 @@
                 <property name="image">icon_login</property>
                 <property name="focus_on_click">False</property>
                 <property name="always_show_image">True</property>
+                <signal name="activate" handler="on_button_login_clicked" object="applicationwindow_login" swapped="no"/>
                 <signal name="clicked" handler="on_button_login_clicked" object="applicationwindow_login" swapped="no"/>
               </object>
               <packing>
@@ -534,11 +540,10 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label_location">
+                          <object class="GtkEntry" id="entry_location">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">/</property>
-                            <property name="xalign">0.019999999552965164</property>
+                            <property name="can_focus">True</property>
+                            <signal name="activate" handler="on_button_go_clicked" swapped="no"/>
                           </object>
                           <packing>
                             <property name="expand">True</property>
@@ -551,6 +556,24 @@
                         <property name="expand">True</property>
                         <property name="fill">True</property>
                         <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="button_go">
+                        <property name="label" translatable="yes">Go</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="image">icon_go</property>
+                        <property name="focus_on_click">False</property>
+                        <property name="always_show_image">True</property>
+                        <signal name="activate" handler="on_button_go_clicked" object="entry_location" swapped="no"/>
+                        <signal name="clicked" handler="on_button_go_clicked" object="entry_location" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">3</property>
                       </packing>
                     </child>
                   </object>
@@ -1052,18 +1075,6 @@
             <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkSeparator" id="separator_space_used">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="padding">3</property>
-            <property name="position">2</property>
           </packing>
         </child>
         <child>

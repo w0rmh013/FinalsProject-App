@@ -17,10 +17,8 @@ class AppMain:
         self._user_run_thread = threading.Thread(target=self._user.run)
         self._user_run_thread.start()
 
-        self._user_output_thread = threading.Thread(target=self._user.handle_output)
-        self._user_output_thread.start()
-
-        self._user.exec_command('ls /', self._handler.update_treeview_file_explorer)
+        self._handler.handle_exec('ls', self._handler.__class__.update_treeview_file_explorer)
+        self._handler.last_location = '{}@/'.join(self._user.username)
 
         self._main_window = self._builder.get_object('applicationwindow_main')
         self._main_window.set_default_size(600, 450)
@@ -30,3 +28,9 @@ class AppMain:
         Gtk.main()
 
         self._user.logged_in = False
+
+    def handle_exec(self):
+        while self._user.logged_in:
+            while not self._user.output_queue.empty():
+                func, data = self._user.output_queue.get()
+                func(self._handler, data)

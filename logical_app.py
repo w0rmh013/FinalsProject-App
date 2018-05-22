@@ -23,10 +23,11 @@ class User:
 
         self._input = ''
         self._output = ''
+        self.output = ''
 
-        self.input_queue = Queue()
-        self.output_queue = Queue()
-        self.output_lock = threading.Lock()
+        self._input_queue = Queue()
+        # self.output_queue = Queue()
+        self._output_lock = threading.Lock()
 
     def login(self, username, password):
         self._ssh_conn = paramiko.SSHClient()
@@ -52,27 +53,27 @@ class User:
     def run(self):
         # get login message
         # use instead of blocking acquire, because if we logout we want the program to end
-        while not self.output_lock.acquire():
+        while not self._output_lock.acquire():
             if not self.logged_in:
                 break
         temp = self._shell_channel.recv(4096).decode()
         while not temp.endswith('\0'):
             temp += self._shell_channel.recv(4096).decode()
-        self.output_lock.release()
+        self._output_lock.release()
 
         while True:
             # use instead of plain empty check, because if we logout we want the program to end
-            while self.input_queue.empty():
+            while self._input_queue.empty():
                 if not self.logged_in:
                     break
             if not self.logged_in:
                 break
 
-            self._input = self.input_queue.get()
-            self._shell_channel.send(self._input[0] + '\n')
+            self._input = self._input_queue.get()
+            self._shell_channel.send(self._input + '\n')
 
             # use instead of blocking acquire, because if we logout we want the program to end
-            while not self.output_lock.acquire():
+            while not self._output_lock.acquire():
                 if not self.logged_in:
                     break
             if not self.logged_in:
@@ -81,21 +82,22 @@ class User:
             while not self._output.endswith('\0'):
                 self._output += self._shell_channel.recv(4096).decode()
 
-            self.output_lock.release()
+            self._output_lock.release()
             # the last character of the output is always '\0', we trim it
-            self.output_queue.put((self._input[1], self._output[:-1].strip()))
+            self.output = self._output[:-1].strip()
 
         self.close()
 
-    def exec_command(self, command, func):
+    def exec_command(self, command):
         # add command to input queue, func will be used with the output
-        self.input_queue.put((command, func))
+        self._input_queue.put(command)
 
-    def handle_output(self):
-        while self.logged_in:
-            while not self.output_queue.empty():
-                func, data = self.output_queue.get()
-                func(data)
+    def get_output(self):
+        while self.output == '':
+            pass
+        o = self.output
+        self.output = ''
+        return o
 
     def close(self):
         self._locker_service_proc.kill()

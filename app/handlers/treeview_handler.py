@@ -8,6 +8,7 @@ from gi.repository import Gtk, Gdk
 class TreeViewHandler:
     _builder = None
     _user = None
+    last_location = ''
 
     def on_treeview_file_explorer_button_press_event(self, treeview_file_explorer, event):
         if event.type == Gdk.EventType.BUTTON_PRESS:
@@ -38,8 +39,9 @@ class TreeViewHandler:
         liststore_file_explorer.clear()
 
         # when we update treeview, we want to update the location bar as well
-        label_location = self._builder.get_object('label_location')
-        label_location.set_text(data_dict['Path'])
+        entry_location = self._builder.get_object('entry_location')
+        if self.last_location != data_dict['Path']:
+            entry_location.set_text(data_dict['Path'])
 
         for d, info in data_dict['Directories'].items():
             liststore_file_explorer.append([d, info.get('Owner', '-'), info.get('Created', '-'),
