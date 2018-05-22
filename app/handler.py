@@ -1,5 +1,4 @@
 import json
-import threading
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -11,9 +10,9 @@ class Handler:
         self._builder = builder
         self._user = user
         self.logged_in = False
-        self.last_location = ''
 
-        self._updating_lock = threading.Lock()
+        self.root_dir = ''
+        self.location_history = list()
 
     def handle_exec(self, command, handler_class_func):
         self._user.exec_command(command)
@@ -31,14 +30,16 @@ class Handler:
     def update_treeview_file_explorer(self, data):
         data_dict = json.loads(data)
         if type(data_dict) is not dict:
-            pass
+            if type(data_dict) is int:
+                self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
+                                      Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
+            return
         liststore_file_explorer = self._builder.get_object('liststore_file_explorer')
         liststore_file_explorer.clear()
 
         # when we update treeview, we want to update the location bar as well
         entry_location = self._builder.get_object('entry_location')
-        if self.last_location != data_dict['Path']:
-            entry_location.set_text(data_dict['Path'])
+        entry_location.set_text(data_dict['Path'])
 
         for d, info in data_dict['Directories'].items():
             liststore_file_explorer.append([d, info.get('Owner', '-'), info.get('Created', '-'),
@@ -55,11 +56,11 @@ class Handler:
     def update_location(self, data):
         entry_location = self._builder.get_object('entry_location')
         if data == '0':
-            self.last_location = entry_location.get_text()
+            self.location_history.append(entry_location.get_text())
             self.update_statusbar('statusbar_action_feedback', 'feedback', 'OK', Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(0.2, 0.9, 0.2, 1.0))
         else:
-            entry_location.set_text(self.last_location)
+            entry_location.set_text(self.location_history[-1])
             self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
 
@@ -109,10 +110,22 @@ class Handler:
             self.update_statusbar('statusbar_login', context_name, status, Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
 
+        self.root_dir = '{}@/'.format(self._user.username)
+        self.location_history.append(self.root_dir)
         return True
 
     def on_button_go_clicked(self, entry_location):
         location = entry_location.get_text()
-        print('LOCATION', location)
         self.handle_exec('cd \"{}\"'.format(location), Handler.update_location)
+        self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+    def on_button_back_clicked(self, entry_location):
+        print(self.location_history, self.location_history[-1], self.location_history[-2])
+        self.location_history = self.location_history[:-1]
+        if len(self.location_history) == 0:
+            self.location_history.append(self.root_dir)
+
+        entry_location.set_text(self.location_history[-1])
+
+        self.handle_exec('cd \"{}\"'.format(self.location_history[-1]), Handler.update_location)
         self.handle_exec('ls', Handler.update_treeview_file_explorer)

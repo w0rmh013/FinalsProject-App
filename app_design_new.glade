@@ -514,6 +514,8 @@
                         <property name="image">icon_back</property>
                         <property name="focus_on_click">False</property>
                         <property name="always_show_image">True</property>
+                        <signal name="activate" handler="on_button_back_clicked" object="entry_location" swapped="no"/>
+                        <signal name="clicked" handler="on_button_back_clicked" object="entry_location" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>

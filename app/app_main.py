@@ -18,7 +18,6 @@ class AppMain:
         self._user_run_thread.start()
 
         self._handler.handle_exec('ls', self._handler.__class__.update_treeview_file_explorer)
-        self._handler.last_location = '{}@/'.join(self._user.username)
 
         self._main_window = self._builder.get_object('applicationwindow_main')
         self._main_window.set_default_size(600, 450)
