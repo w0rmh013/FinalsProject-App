@@ -21,4 +21,4 @@ class AppLogin:
         self._login_window.show_all()
         Gtk.main()
 
-        self.logged_in = True
+        self.logged_in = self._handler.logged_in

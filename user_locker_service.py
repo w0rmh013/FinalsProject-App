@@ -4,10 +4,11 @@ from ecdsa.keys import SigningKey, VerifyingKey
 from ecdsa import curves, util, ellipticcurve
 import os
 import paramiko
+import re
 import scp
 import socket
 import sys
-import re
+import threading
 
 from AES_cipher import AESCipher
 
@@ -114,6 +115,7 @@ def run(server_ip, locker_service_port, curve, server_verifying_key):
 
     # start listener
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     listener.bind(('0.0.0.0', locker_service_port))
     listener.listen(2)
 
@@ -147,7 +149,9 @@ def main():
         print('Usage:', 'python3', 'user_locker_service.py', '<ServerIP>', '<LockerServicePort>', '<Curve>',
               '<ServerVerifyingKey>')
         sys.exit(1)
-    run(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+
+    locker_service_thread = threading.Thread(target=run, args=(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]))
+    locker_service_thread.run()
     sys.exit(0)
 
 

@@ -191,8 +191,6 @@
   </object>
   <object class="GtkApplicationWindow" id="applicationwindow_login">
     <property name="can_focus">False</property>
-    <property name="margin_left">5</property>
-    <property name="margin_right">5</property>
     <property name="icon_name">changes-prevent</property>
     <child>
       <object class="GtkBox" id="vbox_login">
@@ -243,6 +241,7 @@
               <object class="GtkEntry" id="entry_username">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <signal name="activate" handler="on_button_login_clicked" object="applicationwindow_login" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">2</property>
@@ -255,6 +254,7 @@
                 <property name="can_focus">True</property>
                 <property name="visibility">False</property>
                 <property name="input_purpose">password</property>
+                <signal name="activate" handler="on_button_login_clicked" object="applicationwindow_login" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">2</property>
@@ -384,15 +384,6 @@
       <!-- column-name size -->
       <column type="gint64"/>
     </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">test.txt</col>
-        <col id="1" translatable="yes">user1</col>
-        <col id="2" translatable="yes">01-05-18</col>
-        <col id="3" translatable="yes">17-05-18</col>
-        <col id="4">531</col>
-      </row>
-    </data>
   </object>
   <object class="GtkListStore" id="liststore_shared_file_explorer">
     <columns>
@@ -408,8 +399,6 @@
   </object>
   <object class="GtkApplicationWindow" id="applicationwindow_main">
     <property name="can_focus">False</property>
-    <property name="margin_left">1</property>
-    <property name="margin_right">1</property>
     <property name="icon_name">changes-prevent</property>
     <child>
       <object class="GtkBox" id="vbox_main">
