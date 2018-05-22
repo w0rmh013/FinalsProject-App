@@ -65,12 +65,20 @@ class Handler:
                                   Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
 
     def on_treeview_file_explorer_button_press_event(self, treeview_file_explorer, event):
-        if event.type == Gdk.EventType.BUTTON_PRESS:
+        if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
             tree_selection = treeview_file_explorer.get_selection()
             path = treeview_file_explorer.get_path_at_pos(event.x, event.y)
             if path is None:
                 return False
+
             tree_selection.select_path(path[0])
+            model, tree_iter = tree_selection.get_selected()
+            value = model[tree_iter][:]
+
+            # if user double-clicked a directory, we want to cd into it
+            if value[-1] == 'Directory':
+                self.handle_exec('cd \"{}\"'.format(value[0]), Handler.update_location)
+                self.handle_exec('ls'.format(value[0]), Handler.update_treeview_file_explorer)
 
     def on_treeview_file_explorer_button_release_event(self, treeview_file_explorer, event):
         if event.type == Gdk.EventType.BUTTON_RELEASE and event.button == 3:
@@ -116,11 +124,11 @@ class Handler:
 
     def on_button_go_clicked(self, entry_location):
         location = entry_location.get_text()
+
         self.handle_exec('cd \"{}\"'.format(location), Handler.update_location)
         self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
     def on_button_back_clicked(self, entry_location):
-        print(self.location_history, self.location_history[-1], self.location_history[-2])
         self.location_history = self.location_history[:-1]
         if len(self.location_history) == 0:
             self.location_history.append(self.root_dir)
@@ -128,4 +136,10 @@ class Handler:
         entry_location.set_text(self.location_history[-1])
 
         self.handle_exec('cd \"{}\"'.format(self.location_history[-1]), Handler.update_location)
+        self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+    def on_button_home_clicked(self, entry_location):
+        entry_location.set_text(self.root_dir)
+
+        self.handle_exec('cd \"{}\"'.format(self.root_dir), Handler.update_location)
         self.handle_exec('ls', Handler.update_treeview_file_explorer)
