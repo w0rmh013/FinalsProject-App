@@ -17,7 +17,7 @@ class AppMain:
         self._user_run_thread = threading.Thread(target=self._user.run)
         self._user_run_thread.start()
 
-        self._user_output_thread = threading.Thread(target=self._user.get_output)
+        self._user_output_thread = threading.Thread(target=self._user.handle_output)
         self._user_output_thread.start()
 
         self._user.exec_command('ls')
@@ -34,3 +34,5 @@ class AppMain:
         self._main_window.connect('destroy', Gtk.main_quit)
         self._main_window.show_all()
         Gtk.main()
+
+        self._user.logged_in = False

@@ -22,12 +22,10 @@ class User:
         self.username = ''
 
         self._input = ''
-        self.output = ''
         self._output = ''
 
         self.input_queue = Queue()
         self.output_queue = Queue()
-        self.output_event = threading.Event()
         self.output_lock = threading.Lock()
 
     def login(self, username, password):
@@ -35,7 +33,7 @@ class User:
         self._ssh_conn.set_missing_host_key_policy(paramiko.AutoAddPolicy)
 
         try:
-            self._ssh_conn.connect(self._ip, port=self._port, username=username, password=password, timeout=20)
+            self._ssh_conn.connect(self._ip, port=self._port, username=username, password=password, timeout=15)
 
         except paramiko.AuthenticationException:
             self.logged_in = False
@@ -43,7 +41,7 @@ class User:
 
         except socket.error:
             self.logged_in = None
-            return False
+            return None
 
         self._shell_channel = self._ssh_conn.invoke_shell()
         self.logged_in = True
@@ -53,37 +51,47 @@ class User:
 
     def run(self):
         # get login message
-        self.output_lock.acquire(True)
+        # use instead of blocking acquire, because if we logout we want the program to end
+        while not self.output_lock.acquire():
+            if not self.logged_in:
+                break
         temp = self._shell_channel.recv(4096).decode()
         while not temp.endswith('\0'):
             temp += self._shell_channel.recv(4096).decode()
         self.output_lock.release()
 
         while True:
+            # use instead of plain empty check, because if we logout we want the program to end
             while self.input_queue.empty():
-                pass
+                if not self.logged_in:
+                    break
+            if not self.logged_in:
+                break
+
             self._input = self.input_queue.get()
             self._shell_channel.send(self._input + '\n')
 
-            self.output_lock.acquire(True)
+            # use instead of blocking acquire, because if we logout we want the program to end
+            while not self.output_lock.acquire():
+                if not self.logged_in:
+                    break
+            if not self.logged_in:
+                break
             self._output = self._shell_channel.recv(4096).decode()
             while not self._output.endswith('\0'):
                 self._output += self._shell_channel.recv(4096).decode()
 
             self.output_lock.release()
-            self.output_queue.put(self._output)
-            # self.output_event.set()
+            # the last character of the output is always '\0', we trim it
+            self.output_queue.put((self._input, self._output[:-1].strip()))
+
+        self.close()
 
     def exec_command(self, command):
         self.input_queue.put(command)
 
-    def get_output(self):
-        while True:
-            # self.output = ''
-            # while not self.output_event.is_set():
-            #     pass
-            # print(self._output)
-            # self.output_event.clear()
+    def handle_output(self):
+        while self.logged_in:
             while not self.output_queue.empty():
                 print(self.output_queue.get())
 
