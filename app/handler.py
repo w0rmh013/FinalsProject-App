@@ -14,6 +14,13 @@ class Handler:
         self.root_dir = ''
         self.location_history = list()
 
+    def _append_to_location_history(self, location):
+        self.location_history = reduce(lambda lst, x: lst.append(x) or lst if x not in lst else lst,
+                                       self.location_history, [location])
+
+    def _do_nothing(self, data):
+        pass
+
     def handle_exec(self, command, handler_class_func):
         self._user.exec_command(command)
         output = self._user.get_output()
@@ -56,11 +63,19 @@ class Handler:
     def update_location(self, data):
         entry_location = self._builder.get_object('entry_location')
         if data == '0':
-            self.location_history.append(entry_location.get_text())
+            self._append_to_location_history(entry_location.get_text())
             self.update_statusbar('statusbar_action_feedback', 'feedback', 'OK', Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(0.2, 0.9, 0.2, 1.0))
         else:
-            entry_location.set_text(self.location_history[-1])
+            entry_location.set_text(self.location_history[0])
+            self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
+                                  Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
+
+    def update_create_dir(self, data):
+        if data == '0':
+            self.update_statusbar('statusbar_action_feedback', 'feedback', 'OK', Gtk.StateFlags.NORMAL,
+                                  Gdk.RGBA(0.2, 0.9, 0.2, 1.0))
+        else:
             self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
 
@@ -77,6 +92,8 @@ class Handler:
 
             # if user double-clicked a directory, we want to cd into it
             if value[-1] == 'Directory':
+                entry_location = self._builder.get_object('entry_location')
+                entry_location.set_text(value[0])
                 self.handle_exec('cd \"{}\"'.format(value[0]), Handler.update_location)
                 self.handle_exec('ls'.format(value[0]), Handler.update_treeview_file_explorer)
 
@@ -119,7 +136,7 @@ class Handler:
                                   Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
 
         self.root_dir = '{}@/'.format(self._user.username)
-        self.location_history.append(self.root_dir)
+        self._append_to_location_history(self.root_dir)
         return True
 
     def on_button_go_clicked(self, entry_location):
@@ -129,13 +146,13 @@ class Handler:
         self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
     def on_button_back_clicked(self, entry_location):
-        self.location_history = self.location_history[:-1]
+        self.location_history = self.location_history[1:]
         if len(self.location_history) == 0:
-            self.location_history.append(self.root_dir)
+            self._append_to_location_history(self.root_dir)
 
-        entry_location.set_text(self.location_history[-1])
+        entry_location.set_text(self.location_history[0])
 
-        self.handle_exec('cd \"{}\"'.format(self.location_history[-1]), Handler.update_location)
+        self.handle_exec('cd \"{}\"'.format(self.location_history[0]), Handler.update_location)
         self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
     def on_button_home_clicked(self, entry_location):
@@ -143,3 +160,13 @@ class Handler:
 
         self.handle_exec('cd \"{}\"'.format(self.root_dir), Handler.update_location)
         self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+    def on_button_create_dir_clicked(self, dialog_create_dir):
+        response = dialog_create_dir.run()
+        dialog_create_dir.hide()
+        entry_create_dir = self._builder.get_object('entry_create_dir')
+        if response == Gtk.ResponseType.OK:
+            self.handle_exec('create \"{}\"'.format(entry_create_dir.get_text()), Handler.update_create_dir)
+            self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+        entry_create_dir.set_text('')
