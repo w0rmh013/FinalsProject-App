@@ -70,6 +70,36 @@ class Handler:
             liststore_file_explorer.append([self._icon_unknown, u, info.get('Owner', ''), info.get('Created', ''),
                                             info.get('Last Modified', ''), str(info.get('Size', ''))])
 
+    def update_treeview_shared_file_explorer(self, data):
+        data_dict = json.loads(data)
+
+        liststore_shared_file_explorer = self._builder.get_object('liststore_shared_file_explorer')
+        liststore_shared_file_explorer.clear()
+
+        for d, info in data_dict['Directories'].items():
+            perms = info.get('My Permissions', '---')
+            if perms.startswith('rwx'):
+                frmt_perm = 'List, Modify'
+            elif perms.startswith('r'):
+                frmt_perm = 'List'
+            else:
+                frmt_perm = '---'
+            liststore_shared_file_explorer.append([self._icon_folder, d, info.get('Owner', ''), frmt_perm])
+
+        for f, info in data_dict['Files'].items():
+            perms = info.get('My Permissions', '---')
+            if perms.startswith('rw'):
+                frmt_perm = 'Get, Modify'
+            elif perms.startswith('r'):
+                frmt_perm = 'Get'
+            else:
+                frmt_perm = '---'
+            liststore_shared_file_explorer.append([self._icon_file, f, info.get('Owner', ''), frmt_perm])
+
+        for u, info in data_dict['Unknown Types'].items():
+            liststore_shared_file_explorer.append([self._icon_unknown, u, info.get('Owner', ''),
+                                                   info.get('My Permissions', '---')])
+
     def update_location(self, data):
         entry_location = self._builder.get_object('entry_location')
         if data == '0':
@@ -93,6 +123,16 @@ class Handler:
         data_dict = json.loads(data)
         label_space_used_percentage = self._builder.get_object('label_space_used_percentage')
         label_space_used_percentage.set_text(data_dict['Use%'])
+
+    def update_help_detailed(self, data):
+        textview_help_detailed = self._builder.get_object('textview_help_detailed')
+        textbuffer = textview_help_detailed.get_buffer()
+        textbuffer.set_text(data)
+
+    def update_help_functions(self, data):
+        textview_help = self._builder.get_object('textview_help')
+        textbuffer = textview_help.get_buffer()
+        textbuffer.set_text(data)
 
     def on_applicationwindow_main_destroy(self, applicationwindow_main):
         self.handle_exec('logout', self._do_nothing)
@@ -201,6 +241,7 @@ class Handler:
         entry_create_dir.set_text('')
 
     def on_button_upload_clicked(self, filechooserdialog_upload):
+        filechooserdialog_upload.set_title('Select a File to Upload')
         response = filechooserdialog_upload.run()
         filechooserdialog_upload.hide()
 
@@ -233,3 +274,25 @@ class Handler:
         entry_current_password.set_text('')
         entry_new_password.set_text('')
         entry_confirm_password.set_text('')
+
+    def on_button_help_detailed_clicked(self, entry_help_function):
+        self.handle_exec('help\0{}'.format(entry_help_function.get_text()), Handler.update_help_detailed)
+
+    def on_notebook_main_change_current_page(self, notebook_main):
+        current_page = notebook_main.get_current_page()
+
+        # drive tab
+        if current_page == 0:
+            self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+        # shared with me tab
+        elif current_page == 1:
+            self.handle_exec('shared', Handler.update_treeview_shared_file_explorer)
+
+    def on_imagemenuitem_logout_activate(self, applicationwindow_main):
+        self.on_applicationwindow_main_destroy(applicationwindow_main)
+
+    def on_imagemenuitem_help_activate(self, dialog_help):
+        dialog_help.set_default_size(300, 225)
+        dialog_help.run()
+        dialog_help.hide()
