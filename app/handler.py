@@ -14,6 +14,10 @@ class Handler:
         self.root_dir = ''
         self.location_history = list()
 
+        self._icon_folder = Gtk.IconTheme.get_default().load_icon('folder-symbolic', Gtk.IconSize.BUTTON, 0)
+        self._icon_file = Gtk.IconTheme.get_default().load_icon('folder-documents-symbolic', Gtk.IconSize.BUTTON, 0)
+        self._icon_unknown = Gtk.IconTheme.get_default().load_icon('window-close-symbolic', Gtk.IconSize.BUTTON, 0)
+
     def _append_to_location_history(self, location):
         self.location_history = reduce(lambda lst, x: lst.append(x) or lst if x not in lst else lst,
                                        self.location_history, [location])
@@ -22,7 +26,6 @@ class Handler:
         pass
 
     def handle_exec(self, command, handler_class_func):
-        print(command)
         self._user.exec_command(command)
         if command.lower().strip() == 'logout':
             self._user.logged_in = False
@@ -52,20 +55,20 @@ class Handler:
         entry_location = self._builder.get_object('entry_location')
         entry_location.set_text(data_dict['Path'])
 
-        liststore_file_explorer.append(['.', '-', '-', '-', 0, 'Directory'])
-        liststore_file_explorer.append(['..', '-', '-', '-', 0, 'Directory'])
+        liststore_file_explorer.append([self._icon_folder, '.', '', '', '', ''])
+        liststore_file_explorer.append([self._icon_folder, '..', '', '', '', ''])
 
         for d, info in data_dict['Directories'].items():
-            liststore_file_explorer.append([d, info.get('Owner', '-'), info.get('Created', '-'),
-                                            info.get('Last Modified', '-'), info.get('Size', 0), 'Directory'])
+            liststore_file_explorer.append([self._icon_folder, d, info.get('Owner', ''), info.get('Created', ''),
+                                            info.get('Last Modified', ''), str(info.get('Size', ''))])
 
         for f, info in data_dict['Files'].items():
-            liststore_file_explorer.append([f, info.get('Owner', '-'), info.get('Created', '-'),
-                                            info.get('Last Modified', '-'), info.get('Size', 0), 'File'])
+            liststore_file_explorer.append([self._icon_file, f, info.get('Owner', ''), info.get('Created', ''),
+                                            info.get('Last Modified', ''), str(info.get('Size', ''))])
 
         for u, info in data_dict['Unknown Types'].items():
-            liststore_file_explorer.append([u, info.get('Owner', '-'), info.get('Created', '-'),
-                                            info.get('Last Modified', '-'), info.get('Size', 0), 'Unknown'])
+            liststore_file_explorer.append([self._icon_unknown, u, info.get('Owner', ''), info.get('Created', ''),
+                                            info.get('Last Modified', ''), str(info.get('Size', ''))])
 
     def update_location(self, data):
         entry_location = self._builder.get_object('entry_location')
@@ -78,7 +81,7 @@ class Handler:
             self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
 
-    def update_create_dir(self, data):
+    def update_feedback(self, data):
         if data == '0':
             self.update_statusbar('statusbar_action_feedback', 'feedback', 'OK', Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(0.2, 0.9, 0.2, 1.0))
@@ -103,9 +106,9 @@ class Handler:
             value = model[tree_iter][:]
 
             # if user double-clicked a directory, we want to cd into it
-            if value[-1] == 'Directory':
+            if value[0] == self._icon_folder:
                 entry_location = self._builder.get_object('entry_location')
-                new_location = '/'.join([entry_location.get_text(), value[0]])
+                new_location = '/'.join([entry_location.get_text(), value[1]])
                 entry_location.set_text(new_location)
 
                 self.handle_exec('cd \"{}\"'.format(new_location), Handler.update_location)
@@ -116,9 +119,9 @@ class Handler:
             tree_selection = treeview_file_explorer.get_selection()
             model, tree_iter = tree_selection.get_selected()
             value = model[tree_iter][:]
-            if value[-1] == 'Directory':
+            if value[0] == self._icon_folder:
                 menu = self._builder.get_object('menu_drive_dir_right_click')
-            elif value[-1] == 'File:':
+            elif value[0] == self._icon_file:
                 menu = self._builder.get_object('menu_drive_file_right_click')
             else:
                 return
@@ -180,7 +183,26 @@ class Handler:
         dialog_create_dir.hide()
         entry_create_dir = self._builder.get_object('entry_create_dir')
         if response == Gtk.ResponseType.OK:
-            self.handle_exec('create \"{}\"'.format(entry_create_dir.get_text()), Handler.update_create_dir)
+            self.handle_exec('create \"{}\"'.format(entry_create_dir.get_text()), Handler.update_feedback)
             self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
         entry_create_dir.set_text('')
+
+    def on_button_upload_clicked(self, filechooserdialog_upload):
+        response = filechooserdialog_upload.run()
+        filechooserdialog_upload.hide()
+
+        if response == Gtk.ResponseType.OK:
+            dialog_enter_password = self._builder.get_object('dialog_enter_password')
+            password_dialog_response = dialog_enter_password.run()
+            dialog_enter_password.hide()
+
+            entry_enter_password = self._builder.get_object('entry_enter_password')
+            if password_dialog_response == Gtk.ResponseType.OK:
+                selected_filename = filechooserdialog_upload.get_filename()
+
+                password = entry_enter_password.get_text()
+                self.handle_exec('upload \"{}\" . \"{}\"'.format(selected_filename, password), Handler.update_feedback)
+                self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+            entry_enter_password.set_text('')
