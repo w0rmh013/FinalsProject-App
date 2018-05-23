@@ -14,9 +14,9 @@ class Handler:
         self.root_dir = ''
         self.location_history = list()
 
-        self._icon_folder = Gtk.IconTheme.get_default().load_icon('folder-symbolic', Gtk.IconSize.BUTTON, 0)
-        self._icon_file = Gtk.IconTheme.get_default().load_icon('folder-documents-symbolic', Gtk.IconSize.BUTTON, 0)
-        self._icon_unknown = Gtk.IconTheme.get_default().load_icon('window-close-symbolic', Gtk.IconSize.BUTTON, 0)
+        self._icon_folder = Gtk.IconTheme.get_default().load_icon('folder-symbolic', 16, 0)
+        self._icon_file = Gtk.IconTheme.get_default().load_icon('folder-documents-symbolic', 16, 0)
+        self._icon_unknown = Gtk.IconTheme.get_default().load_icon('window-close-symbolic', 16, 0)
 
     def _append_to_location_history(self, location):
         self.location_history = reduce(lambda lst, x: lst.append(x) or lst if x not in lst else lst,
@@ -89,6 +89,11 @@ class Handler:
             self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
 
+    def update_space(self, data):
+        data_dict = json.loads(data)
+        label_space_used_percentage = self._builder.get_object('label_space_used_percentage')
+        label_space_used_percentage.set_text(data_dict['Use%'])
+
     def on_applicationwindow_main_destroy(self, applicationwindow_main):
         self.handle_exec('logout', self._do_nothing)
         applicationwindow_main.destroy()
@@ -111,8 +116,10 @@ class Handler:
                 new_location = '/'.join([entry_location.get_text(), value[1]])
                 entry_location.set_text(new_location)
 
-                self.handle_exec('cd \"{}\"'.format(new_location), Handler.update_location)
+                self.handle_exec('cd\0{}'.format(new_location), Handler.update_location)
                 self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+        self.handle_exec('space', Handler.update_space)
 
     def on_treeview_file_explorer_button_release_event(self, treeview_file_explorer, event):
         if event.type == Gdk.EventType.BUTTON_RELEASE and event.button == 3:
@@ -159,8 +166,9 @@ class Handler:
     def on_button_go_clicked(self, entry_location):
         location = entry_location.get_text()
 
-        self.handle_exec('cd \"{}\"'.format(location), Handler.update_location)
+        self.handle_exec('cd\0{}'.format(location), Handler.update_location)
         self.handle_exec('ls', Handler.update_treeview_file_explorer)
+        self.handle_exec('space', Handler.update_space)
 
     def on_button_back_clicked(self, entry_location):
         self.location_history = self.location_history[1:]
@@ -169,22 +177,26 @@ class Handler:
 
         entry_location.set_text(self.location_history[0])
 
-        self.handle_exec('cd \"{}\"'.format(self.location_history[0]), Handler.update_location)
+        self.handle_exec('cd\0{}'.format(self.location_history[0]), Handler.update_location)
         self.handle_exec('ls', Handler.update_treeview_file_explorer)
+        self.handle_exec('space', Handler.update_space)
 
     def on_button_home_clicked(self, entry_location):
         entry_location.set_text(self.root_dir)
 
-        self.handle_exec('cd \"{}\"'.format(self.root_dir), Handler.update_location)
+        self.handle_exec('cd\0{}'.format(self.root_dir), Handler.update_location)
         self.handle_exec('ls', Handler.update_treeview_file_explorer)
+        self.handle_exec('space', Handler.update_space)
 
     def on_button_create_dir_clicked(self, dialog_create_dir):
         response = dialog_create_dir.run()
         dialog_create_dir.hide()
         entry_create_dir = self._builder.get_object('entry_create_dir')
         if response == Gtk.ResponseType.OK:
-            self.handle_exec('create \"{}\"'.format(entry_create_dir.get_text()), Handler.update_feedback)
+            self.handle_exec('create\0{}'.format(entry_create_dir.get_text()), Handler.update_feedback)
             self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+        self.handle_exec('space', Handler.update_space)
 
         entry_create_dir.set_text('')
 
@@ -202,7 +214,22 @@ class Handler:
                 selected_filename = filechooserdialog_upload.get_filename()
 
                 password = entry_enter_password.get_text()
-                self.handle_exec('upload \"{}\" . \"{}\"'.format(selected_filename, password), Handler.update_feedback)
+                self.handle_exec('upload\0{}\0.\0{}\0'.format(selected_filename, password), Handler.update_feedback)
                 self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
             entry_enter_password.set_text('')
+
+        self.handle_exec('space', Handler.update_space)
+
+    def on_button_confirm_changes_clicked(self, button):
+        entry_current_password = self._builder.get_object('entry_current_password')
+        entry_new_password = self._builder.get_object('entry_new_password')
+        entry_confirm_password = self._builder.get_object('entry_confirm_password')
+
+        self.handle_exec('passwd\0{}\0{}\0{}'.format(entry_current_password.get_text(),
+                                                     entry_new_password.get_text(),
+                                                     entry_confirm_password.get_text()), Handler.update_feedback)
+
+        entry_current_password.set_text('')
+        entry_new_password.set_text('')
+        entry_confirm_password.set_text('')

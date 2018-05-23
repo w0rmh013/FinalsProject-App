@@ -13,8 +13,7 @@ class User:
         self._server_verifying_key = server_verifying_key
         self._port = server_ssh_port
 
-        self._locker_service_proc = subprocess.Popen(['python3', 'user_locker_service.py', self._ip, self._local_port,
-                                                      self._curve, self._server_verifying_key])
+        self._locker_service_proc = None
 
         self._ssh_conn = None
         self._shell_channel = None
@@ -47,6 +46,9 @@ class User:
         self._shell_channel = self._ssh_conn.invoke_shell()
         self.logged_in = True
         self.username = username
+
+        self._locker_service_proc = subprocess.Popen(['python3', 'user_locker_service.py', self._ip, self._local_port,
+                                                      self._curve, self._server_verifying_key])
 
         return True
 
