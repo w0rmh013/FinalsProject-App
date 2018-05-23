@@ -52,6 +52,9 @@ class Handler:
         entry_location = self._builder.get_object('entry_location')
         entry_location.set_text(data_dict['Path'])
 
+        liststore_file_explorer.append(['.', '-', '-', '-', 0, 'Directory'])
+        liststore_file_explorer.append(['..', '-', '-', '-', 0, 'Directory'])
+
         for d, info in data_dict['Directories'].items():
             liststore_file_explorer.append([d, info.get('Owner', '-'), info.get('Created', '-'),
                                             info.get('Last Modified', '-'), info.get('Size', 0), 'Directory'])
@@ -102,9 +105,11 @@ class Handler:
             # if user double-clicked a directory, we want to cd into it
             if value[-1] == 'Directory':
                 entry_location = self._builder.get_object('entry_location')
-                entry_location.set_text(value[0])
-                self.handle_exec('cd \"{}\"'.format(value[0]), Handler.update_location)
-                self.handle_exec('ls'.format(value[0]), Handler.update_treeview_file_explorer)
+                new_location = '/'.join([entry_location.get_text(), value[0]])
+                entry_location.set_text(new_location)
+
+                self.handle_exec('cd \"{}\"'.format(new_location), Handler.update_location)
+                self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
     def on_treeview_file_explorer_button_release_event(self, treeview_file_explorer, event):
         if event.type == Gdk.EventType.BUTTON_RELEASE and event.button == 3:
