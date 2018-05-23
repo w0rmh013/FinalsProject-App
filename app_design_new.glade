@@ -264,6 +264,7 @@
     <property name="can_focus">False</property>
     <property name="window_position">center</property>
     <property name="icon_name">changes-prevent</property>
+    <signal name="destroy" handler="on_applicationwindow_main_destroy" swapped="no"/>
     <child>
       <object class="GtkBox" id="vbox_main">
         <property name="visible">True</property>

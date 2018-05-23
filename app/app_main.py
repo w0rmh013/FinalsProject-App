@@ -27,9 +27,3 @@ class AppMain:
         Gtk.main()
 
         self._user.logged_in = False
-
-    def handle_exec(self):
-        while self._user.logged_in:
-            while not self._user.output_queue.empty():
-                func, data = self._user.output_queue.get()
-                func(self._handler, data)

@@ -22,9 +22,13 @@ class Handler:
         pass
 
     def handle_exec(self, command, handler_class_func):
+        print(command)
         self._user.exec_command(command)
-        output = self._user.get_output()
-        handler_class_func(self, output)
+        if command.lower().strip() == 'logout':
+            self._user.logged_in = False
+        else:
+            output = self._user.get_output()
+            handler_class_func(self, output)
 
     def update_statusbar(self, statusbar_name, context_name, status, flag=None, color=None):
         statusbar = self._builder.get_object(statusbar_name)
@@ -78,6 +82,11 @@ class Handler:
         else:
             self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
+
+    def on_applicationwindow_main_destroy(self, applicationwindow_main):
+        self.handle_exec('logout', self._do_nothing)
+        applicationwindow_main.destroy()
+        return True
 
     def on_treeview_file_explorer_button_press_event(self, treeview_file_explorer, event):
         if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
