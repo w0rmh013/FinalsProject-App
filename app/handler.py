@@ -18,6 +18,13 @@ class Handler:
         self._icon_file = Gtk.IconTheme.get_default().load_icon('folder-documents-symbolic', 16, 0)
         self._icon_unknown = Gtk.IconTheme.get_default().load_icon('window-close-symbolic', 16, 0)
 
+    def _frmt_perm(self, x):
+        if x.startswith('rwx'):
+            return 'View, Modify'
+        if x.startswith('r'):
+            return 'View'
+        return '---'
+
     def _append_to_location_history(self, location):
         self.location_history = reduce(lambda lst, x: lst.append(x) or lst if x not in lst else lst,
                                        self.location_history, [location])
@@ -32,6 +39,7 @@ class Handler:
         else:
             output = self._user.get_output()
             handler_class_func(self, output)
+            print(command, output)
 
     def update_statusbar(self, statusbar_name, context_name, status, flag=None, color=None):
         statusbar = self._builder.get_object(statusbar_name)
@@ -78,27 +86,27 @@ class Handler:
 
         for d, info in data_dict['Directories'].items():
             perms = info.get('My Permissions', '---')
-            if perms.startswith('rwx'):
-                frmt_perm = 'List, Modify'
-            elif perms.startswith('r'):
-                frmt_perm = 'List'
-            else:
-                frmt_perm = '---'
-            liststore_shared_file_explorer.append([self._icon_folder, d, info.get('Owner', ''), frmt_perm])
+            liststore_shared_file_explorer.append([self._icon_folder, d, info.get('Owner', ''), self._frmt_perm(perms)])
 
         for f, info in data_dict['Files'].items():
             perms = info.get('My Permissions', '---')
-            if perms.startswith('rw'):
-                frmt_perm = 'Get, Modify'
-            elif perms.startswith('r'):
-                frmt_perm = 'Get'
-            else:
-                frmt_perm = '---'
-            liststore_shared_file_explorer.append([self._icon_file, f, info.get('Owner', ''), frmt_perm])
+            liststore_shared_file_explorer.append([self._icon_file, f, info.get('Owner', ''), self._frmt_perm(perms)])
 
         for u, info in data_dict['Unknown Types'].items():
             liststore_shared_file_explorer.append([self._icon_unknown, u, info.get('Owner', ''),
                                                    info.get('My Permissions', '---')])
+
+    def update_treeview_edit_permissions(self, data):
+        data_dict = json.loads(data)
+
+        liststore_edit_permissions = self._builder.get_object('liststore_edit_permissions')
+        liststore_edit_permissions.clear()
+
+        label_edit_permissions_file = self._builder.get_object('label_edit_permissions_file')
+        label_edit_permissions_file.set_text(data_dict['Path'])
+
+        for u, p in data_dict['Permissions'].items():
+            liststore_edit_permissions.append([u, self._frmt_perm(p)])
 
     def update_location(self, data):
         entry_location = self._builder.get_object('entry_location')
@@ -139,6 +147,10 @@ class Handler:
         applicationwindow_main.destroy()
         return True
 
+    def on_dialog_destroy(self, dialog, event):
+        dialog.hide()
+        return True
+
     def on_treeview_file_explorer_button_press_event(self, treeview_file_explorer, event):
         if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
             tree_selection = treeview_file_explorer.get_selection()
@@ -158,8 +170,7 @@ class Handler:
 
                 self.handle_exec('cd\0{}'.format(new_location), Handler.update_location)
                 self.handle_exec('ls', Handler.update_treeview_file_explorer)
-
-        self.handle_exec('space', Handler.update_space)
+                self.handle_exec('space', Handler.update_space)
 
     def on_treeview_file_explorer_button_release_event(self, treeview_file_explorer, event):
         if event.type == Gdk.EventType.BUTTON_RELEASE and event.button == 3:
@@ -167,12 +178,58 @@ class Handler:
             model, tree_iter = tree_selection.get_selected()
             value = model[tree_iter][:]
             if value[0] == self._icon_folder:
-                menu = self._builder.get_object('menu_drive_dir_right_click')
+                menu = self._builder.get_object('menu_drive_dir')
             elif value[0] == self._icon_file:
-                menu = self._builder.get_object('menu_drive_file_right_click')
+                menu = self._builder.get_object('menu_drive_file')
             else:
                 return
-            menu.attach_to_widget(treeview_file_explorer)
+            if menu.get_attach_widget() is None:
+                menu.attach_to_widget(treeview_file_explorer)
+            menu.show_all()
+            menu.popup(None, None, None, None, event.button, event.time)
+
+    def on_treeview_shared_file_explorer_button_press_event(self, treeview_shared_file_explorer, event):
+        if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
+            tree_selection = treeview_shared_file_explorer.get_selection()
+            path = treeview_shared_file_explorer.get_path_at_pos(event.x, event.y)
+            if path is None:
+                return False
+
+            tree_selection.select_path(path[0])
+            model, tree_iter = tree_selection.get_selected()
+            value = model[tree_iter][:]
+
+            # if user double-clicked a directory, we want to cd into it
+            if value[0] == self._icon_folder:
+                entry_location = self._builder.get_object('entry_location')
+                new_location = value[1]
+                entry_location.set_text(new_location)
+
+                notebook_main = self._builder.get_object('notebook_main')
+                notebook_main.set_current_page(0)
+
+                self.handle_exec('cd\0{}'.format(new_location), Handler.update_location)
+                self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+    def on_treeview_shared_file_explorer_button_release_event(self, treeview_shared_file_explorer, event):
+        if event.type == Gdk.EventType.BUTTON_RELEASE and event.button == 3:
+            tree_selection = treeview_shared_file_explorer.get_selection()
+            model, tree_iter = tree_selection.get_selected()
+            value = model[tree_iter][:]
+            if value[0] == self._icon_file:
+                menu = self._builder.get_object('menu_shared_file')
+            else:
+                return
+            if menu.get_attach_widget() is None:
+                menu.attach_to_widget(treeview_shared_file_explorer)
+            menu.show_all()
+            menu.popup(None, None, None, None, event.button, event.time)
+
+    def on_treeview_edit_permissions_button_release_event(self, treeview_edit_permissions, event):
+        if event.type == Gdk.EventType.BUTTON_RELEASE and event.button == 3:
+            menu = self._builder.get_object('menu_edit_permissions')
+            if menu.get_attach_widget() is None:
+                menu.attach_to_widget(treeview_edit_permissions)
             menu.show_all()
             menu.popup(None, None, None, None, event.button, event.time)
 
@@ -240,22 +297,25 @@ class Handler:
 
         entry_create_dir.set_text('')
 
-    def on_button_upload_clicked(self, filechooserdialog_upload):
-        filechooserdialog_upload.set_title('Select a File to Upload')
-        response = filechooserdialog_upload.run()
-        filechooserdialog_upload.hide()
+    def on_button_upload_clicked(self, filechooserdialog_transfer):
+        filechooserdialog_transfer.set_action(Gtk.FileChooserAction.OPEN)
+        filechooserdialog_transfer.set_title('Select a File to Upload')
+        response = filechooserdialog_transfer.run()
+        filechooserdialog_transfer.hide()
 
         if response == Gtk.ResponseType.OK:
             dialog_enter_password = self._builder.get_object('dialog_enter_password')
+            label_enter_password = self._builder.get_object('label_enter_password')
+            label_enter_password.set_text('Enter your password')
             password_dialog_response = dialog_enter_password.run()
             dialog_enter_password.hide()
 
             entry_enter_password = self._builder.get_object('entry_enter_password')
             if password_dialog_response == Gtk.ResponseType.OK:
-                selected_filename = filechooserdialog_upload.get_filename()
+                selected_filename = filechooserdialog_transfer.get_filename()
 
                 password = entry_enter_password.get_text()
-                self.handle_exec('upload\0{}\0.\0{}\0'.format(selected_filename, password), Handler.update_feedback)
+                self.handle_exec('upload\0{}\0.\0{}'.format(selected_filename, password), Handler.update_feedback)
                 self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
             entry_enter_password.set_text('')
@@ -278,21 +338,139 @@ class Handler:
     def on_button_help_detailed_clicked(self, entry_help_function):
         self.handle_exec('help\0{}'.format(entry_help_function.get_text()), Handler.update_help_detailed)
 
-    def on_notebook_main_change_current_page(self, notebook_main):
-        current_page = notebook_main.get_current_page()
-
+    def on_notebook_main_switch_page(self, notebook_main, switched_page, switched_page_num):
         # drive tab
-        if current_page == 0:
+        if switched_page_num == 0:
             self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
         # shared with me tab
-        elif current_page == 1:
+        elif switched_page_num == 1:
             self.handle_exec('shared', Handler.update_treeview_shared_file_explorer)
 
     def on_imagemenuitem_logout_activate(self, applicationwindow_main):
         self.on_applicationwindow_main_destroy(applicationwindow_main)
 
     def on_imagemenuitem_help_activate(self, dialog_help):
-        dialog_help.set_default_size(300, 225)
+        dialog_help.set_default_size(320, 240)
         dialog_help.run()
         dialog_help.hide()
+
+    def on_menuitem_permit_activate(self, treeview_selection_file_explorer):
+        dialog_edit_permissions = self._builder.get_object('dialog_edit_permissions')
+        dialog_edit_permissions.set_default_size(300, 225)
+
+        model, tree_iter = treeview_selection_file_explorer.get_selected()
+        value = model[tree_iter][:]
+
+        self.handle_exec('info\0{}'.format(value[1]), Handler.update_treeview_edit_permissions)
+        dialog_edit_permissions.run()
+        dialog_edit_permissions.hide()
+
+    def on_menuitem_delete_activate(self, treeview_selection_file_explorer):
+        model, tree_iter = treeview_selection_file_explorer.get_selected()
+        value = model[tree_iter][:]
+
+        self.handle_exec('delete\0{}'.format(value[1]), Handler.update_treeview_file_explorer)
+
+    def on_menuitem_file_download_activate(self, treeview_selection):
+        filechooserdialog_transfer = self._builder.get_object('filechooserdialog_transfer')
+        filechooserdialog_transfer.set_action(Gtk.FileChooserAction.SAVE)
+        filechooserdialog_transfer.set_title('Select Download Destination')
+        response = filechooserdialog_transfer.run()
+        filechooserdialog_transfer.hide()
+
+        model, tree_iter = treeview_selection.get_selected()
+        value = model[tree_iter][:]
+        src = value[1]
+
+        if response == Gtk.ResponseType.OK:
+            dialog_enter_password = self._builder.get_object('dialog_enter_password')
+            label_enter_password = self._builder.get_object('label_enter_password')
+            label_enter_password.set_text('Enter your password')
+            password_dialog_response = dialog_enter_password.run()
+            dialog_enter_password.hide()
+
+            entry_enter_password = self._builder.get_object('entry_enter_password')
+            if password_dialog_response == Gtk.ResponseType.OK:
+                dst = filechooserdialog_transfer.get_filename()
+
+                password = entry_enter_password.get_text()
+                self.handle_exec('download\0{}\0{}\0{}'.format(src, dst, password), Handler.update_feedback)
+                self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+            entry_enter_password.set_text('')
+
+        self.handle_exec('space', Handler.update_space)
+
+    def on_menuitem_file_lock_activate(self, treeview_selection_file_explorer):
+        dialog_enter_password = self._builder.get_object('dialog_enter_password')
+        label_enter_password = self._builder.get_object('label_enter_password')
+        label_enter_password.set_text('Enter lock password')
+        response = dialog_enter_password.run()
+        dialog_enter_password.hide()
+
+        entry_enter_password = self._builder.get_object('entry_enter_password')
+        if response == Gtk.ResponseType.OK:
+            model, tree_iter = treeview_selection_file_explorer.get_selected()
+            value = model[tree_iter][:]
+
+            name = value[1]
+            password = entry_enter_password.get_text()
+            self.handle_exec('lock\0{}\0{}'.format(name, password), Handler.update_feedback)
+            self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+        entry_enter_password.set_text('')
+
+    def on_menuitem_file_unlock_activate(self, treeview_selection_file_explorer):
+        dialog_enter_password = self._builder.get_object('dialog_enter_password')
+        label_enter_password = self._builder.get_object('label_enter_password')
+        label_enter_password.set_text('Enter unlock password')
+        response = dialog_enter_password.run()
+        dialog_enter_password.hide()
+
+        entry_enter_password = self._builder.get_object('entry_enter_password')
+        if response == Gtk.ResponseType.OK:
+            model, tree_iter = treeview_selection_file_explorer.get_selected()
+            value = model[tree_iter][:]
+
+            name = value[1]
+            password = entry_enter_password.get_text()
+            self.handle_exec('unlock\0{}\0{}'.format(name, password), Handler.update_feedback)
+            self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+        entry_enter_password.set_text('')
+
+    def on_menuitem_add_activate(self, dialog_give_permission):
+        label_edit_permissions_file = self._builder.get_object('label_edit_permissions_file')
+        name = label_edit_permissions_file.get_text()
+        dialog_give_permission.set_title('Edit Permissions for: {}'.format(name))
+
+        response = dialog_give_permission.run()
+        dialog_give_permission.hide()
+
+        entry_perm_username = self._builder.get_object('entry_perm_username')
+        radiobutton_view = self._builder.get_object('radiobutton_view')
+        radiobutton_view_and_modify = self._builder.get_object('radiobutton_view_and_modify')
+
+        if response == Gtk.ResponseType.OK:
+            if radiobutton_view.get_active():
+                self.handle_exec('permit\0{}:rx\0{}'.format(entry_perm_username.get_text(), name), Handler._do_nothing)
+
+            elif radiobutton_view_and_modify.get_active():
+                self.handle_exec('permit\0{}:rwx\0{}'.format(entry_perm_username.get_text(), name), Handler._do_nothing)
+
+            self.handle_exec('info\0{}'.format(name), Handler.update_treeview_edit_permissions)
+
+        entry_perm_username.set_text('')
+
+    def on_menuitem_remove_activate(self, treeview_selection_edit_permissions):
+        model, tree_iter = treeview_selection_edit_permissions.get_selected()
+        if tree_iter is None:
+            return
+
+        label_edit_permissions_file = self._builder.get_object('label_edit_permissions_file')
+        name = label_edit_permissions_file.get_text()
+
+        value = model[tree_iter][:]
+        self.handle_exec('permit\0{}:---\0{}'.format(value[0], name), Handler._do_nothing)
+        self.handle_exec('info\0{}'.format(name), Handler.update_treeview_edit_permissions)

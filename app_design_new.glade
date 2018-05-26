@@ -2,16 +2,6 @@
 <!-- Generated with glade 3.19.0 -->
 <interface>
   <requires lib="gtk+" version="3.12"/>
-  <object class="GtkAdjustment" id="adjustment_horizontal_file_explorer">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
-  <object class="GtkAdjustment" id="adjustment_vertical_file_explorer">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
   <object class="GtkImage" id="icon_back">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -232,6 +222,14 @@
     <property name="can_focus">False</property>
     <property name="icon_name">document-send-symbolic</property>
   </object>
+  <object class="GtkListStore" id="liststore_edit_permissions">
+    <columns>
+      <!-- column-name user -->
+      <column type="gchararray"/>
+      <!-- column-name permissions -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkListStore" id="liststore_file_explorer">
     <columns>
       <!-- column-name type -->
@@ -335,7 +333,7 @@
           <object class="GtkNotebook" id="notebook_main">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <signal name="change-current-page" handler="on_notebook_main_change_current_page" swapped="no"/>
+            <signal name="switch-page" handler="on_notebook_main_switch_page" swapped="no"/>
             <child>
               <object class="GtkBox" id="vbox_page_drive">
                 <property name="visible">True</property>
@@ -462,7 +460,7 @@
                         <signal name="button-press-event" handler="on_treeview_file_explorer_button_press_event" swapped="no"/>
                         <signal name="button-release-event" handler="on_treeview_file_explorer_button_release_event" swapped="no"/>
                         <child internal-child="selection">
-                          <object class="GtkTreeSelection" id="treeview-selection"/>
+                          <object class="GtkTreeSelection" id="treeview_selection_file_explorer"/>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="treeview_column_type">
@@ -480,6 +478,7 @@
                             <property name="spacing">2</property>
                             <property name="sizing">autosize</property>
                             <property name="title" translatable="yes">Name</property>
+                            <property name="sort_column_id">1</property>
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderer_name"/>
                               <attributes>
@@ -581,8 +580,8 @@
                         <property name="image">icon_upload</property>
                         <property name="focus_on_click">False</property>
                         <property name="always_show_image">True</property>
-                        <signal name="activate" handler="on_button_upload_clicked" object="filechooserdialog_upload" swapped="no"/>
-                        <signal name="clicked" handler="on_button_upload_clicked" object="filechooserdialog_upload" swapped="no"/>
+                        <signal name="activate" handler="on_button_upload_clicked" object="filechooserdialog_transfer" swapped="no"/>
+                        <signal name="clicked" handler="on_button_upload_clicked" object="filechooserdialog_transfer" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -653,30 +652,56 @@
                         <property name="can_focus">True</property>
                         <property name="model">liststore_shared_file_explorer</property>
                         <property name="search_column">0</property>
+                        <signal name="button-press-event" handler="on_treeview_shared_file_explorer_button_press_event" swapped="no"/>
+                        <signal name="button-release-event" handler="on_treeview_shared_file_explorer_button_release_event" swapped="no"/>
                         <child internal-child="selection">
-                          <object class="GtkTreeSelection" id="treeview-selection3"/>
+                          <object class="GtkTreeSelection" id="treeview_selection_shared_file_explorer"/>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="treeview_column_shared_type">
                             <property name="title" translatable="yes">Type</property>
+                            <child>
+                              <object class="GtkCellRendererPixbuf" id="cellrenderer_shared_type"/>
+                              <attributes>
+                                <attribute name="pixbuf">0</attribute>
+                              </attributes>
+                            </child>
                           </object>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="treeview_column_shared_name">
                             <property name="sizing">autosize</property>
                             <property name="title" translatable="yes">Name</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="cellrenderer_shared_name"/>
+                              <attributes>
+                                <attribute name="text">1</attribute>
+                              </attributes>
+                            </child>
                           </object>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="treeview_column_shared_owner">
                             <property name="sizing">autosize</property>
                             <property name="title" translatable="yes">Owner</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="cellrenderer_shared_owner"/>
+                              <attributes>
+                                <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
                           </object>
                         </child>
                         <child>
                           <object class="GtkTreeViewColumn" id="treeview_column_shared_my_permissions">
                             <property name="sizing">autosize</property>
                             <property name="title" translatable="yes">My Permissions</property>
+                            <child>
+                              <object class="GtkCellRendererText" id="cellrenderer_shared_my_permissions"/>
+                              <attributes>
+                                <attribute name="text">3</attribute>
+                              </attributes>
+                            </child>
                           </object>
                         </child>
                       </object>
@@ -1131,13 +1156,273 @@
       <action-widget response="-6">button_create_dir_cancel</action-widget>
     </action-widgets>
   </object>
+  <object class="GtkDialog" id="dialog_edit_permissions">
+    <property name="can_focus">False</property>
+    <property name="title" translatable="yes">Edit Permissions</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="type_hint">dialog</property>
+    <property name="transient_for">applicationwindow_main</property>
+    <signal name="delete-event" handler="on_dialog_destroy" swapped="no"/>
+    <signal name="destroy" handler="on_dialog_destroy" swapped="no"/>
+    <signal name="destroy-event" handler="on_dialog_destroy" swapped="no"/>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dialog_vbox_edit_permissions">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog_action_area_edit_permissions">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="button_edit_permissions_close">
+                <property name="label" translatable="yes">Close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="vbox_edit_permissions_inner">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkLabel" id="label_edit_permissions_file">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">File</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="padding">3</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScrolledWindow" id="scrolledwindow_edit_permissions">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkTreeView" id="treeview_edit_permissions">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="model">liststore_edit_permissions</property>
+                    <property name="search_column">1</property>
+                    <signal name="button-release-event" handler="on_treeview_edit_permissions_button_release_event" swapped="no"/>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection" id="treeview_selection_edit_permissions"/>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="treeview_column_user">
+                        <property name="title" translatable="yes">User</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderer_user"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="treeview_column_permissions">
+                        <property name="title" translatable="yes">Permissions</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="cellrenderer_permissions"/>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="-7">button_edit_permissions_close</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkDialog" id="dialog_give_permission">
+    <property name="can_focus">False</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="type_hint">dialog</property>
+    <property name="transient_for">dialog_edit_permissions</property>
+    <signal name="delete-event" handler="on_dialog_destroy" swapped="no"/>
+    <signal name="destroy" handler="on_dialog_destroy" swapped="no"/>
+    <signal name="destroy-event" handler="on_dialog_destroy" swapped="no"/>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dialog_vbox_give_permission">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog_action_area_give_permission">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="button_give_permission_ok">
+                <property name="label" translatable="yes">OK</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button_give_permission_cancel">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="vbox_give_permission_inner">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">3</property>
+            <child>
+              <object class="GtkBox" id="hbox_perm_username">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="spacing">3</property>
+                <child>
+                  <object class="GtkLabel" id="label_perm_username">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Username:</property>
+                    <property name="xalign">1</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="entry_perm_username">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRadioButton" id="radiobutton_view_and_modify">
+                <property name="label" translatable="yes">View &amp; Modify</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="xalign">0</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
+                <property name="group">radiobutton_view</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="pack_type">end</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRadioButton" id="radiobutton_view">
+                <property name="label" translatable="yes">View</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="xalign">0</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="pack_type">end</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="-5">button_give_permission_ok</action-widget>
+      <action-widget response="-6">button_give_permission_cancel</action-widget>
+    </action-widgets>
+  </object>
   <object class="GtkDialog" id="dialog_enter_password">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Enter Password</property>
-    <property name="window_position">center</property>
+    <property name="window_position">center-on-parent</property>
     <property name="icon_name">changes-prevent</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">applicationwindow_main</property>
+    <signal name="delete-event" handler="on_dialog_destroy" swapped="no"/>
+    <signal name="destroy" handler="on_dialog_destroy" swapped="no"/>
+    <signal name="destroy-event" handler="on_dialog_destroy" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog_vbox_enter_password">
         <property name="can_focus">False</property>
@@ -1233,8 +1518,12 @@
   <object class="GtkDialog" id="dialog_help">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Locker Help</property>
+    <property name="window_position">center-on-parent</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">applicationwindow_main</property>
+    <signal name="delete-event" handler="on_dialog_destroy" swapped="no"/>
+    <signal name="destroy" handler="on_dialog_destroy" swapped="no"/>
+    <signal name="destroy-event" handler="on_dialog_destroy" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog_vbox_help">
         <property name="can_focus">False</property>
@@ -1404,21 +1693,28 @@
       <action-widget response="-7">button_help_close</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkFileChooserDialog" id="filechooserdialog_upload">
-    <property name="can_focus">False</property>
+  <object class="GtkFileChooserDialog" id="filechooserdialog_transfer">
+    <property name="can_focus">True</property>
     <property name="can_default">True</property>
+    <property name="has_default">True</property>
+    <property name="receives_default">True</property>
     <property name="window_position">center-on-parent</property>
     <property name="icon_name">document-new-symbolic</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">applicationwindow_main</property>
+    <property name="do_overwrite_confirmation">True</property>
+    <property name="local_only">False</property>
+    <signal name="delete-event" handler="on_dialog_destroy" swapped="no"/>
+    <signal name="destroy" handler="on_dialog_destroy" swapped="no"/>
+    <signal name="destroy-event" handler="on_dialog_destroy" swapped="no"/>
     <child internal-child="vbox">
-      <object class="GtkBox" id="filechooserdialog_vbox_upload">
+      <object class="GtkBox" id="filechooserdialog_vbox_transfer">
         <property name="can_focus">False</property>
         <property name="can_default">True</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkButtonBox" id="filechooserdialog_action_area_upload">
+          <object class="GtkButtonBox" id="filechooserdialog_action_area_transfer">
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
@@ -1466,7 +1762,7 @@
       <action-widget response="-6">button_upload_cancel</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkMenu" id="menu_drive_dir_right_click">
+  <object class="GtkMenu" id="menu_drive_dir">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
@@ -1476,6 +1772,7 @@
         <property name="tooltip_text" translatable="yes">Delete selected directory</property>
         <property name="label" translatable="yes">Delete</property>
         <property name="use_underline">True</property>
+        <signal name="activate" handler="on_menuitem_delete_activate" object="treeview_selection_file_explorer" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1483,21 +1780,13 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Edit permissions of selected directory</property>
-        <property name="label" translatable="yes">Edit Permissions</property>
+        <property name="label" translatable="yes">Edit Permissions..</property>
         <property name="use_underline">True</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="menuitem_dir_show_info">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="tooltip_text" translatable="yes">Show info of selected directroy</property>
-        <property name="label" translatable="yes">Show Info</property>
-        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_menuitem_permit_activate" object="treeview_selection_file_explorer" swapped="no"/>
       </object>
     </child>
   </object>
-  <object class="GtkMenu" id="menu_drive_file_right_click">
+  <object class="GtkMenu" id="menu_drive_file">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
@@ -1507,6 +1796,7 @@
         <property name="tooltip_text" translatable="yes">Delete selected file</property>
         <property name="label" translatable="yes">Delete</property>
         <property name="use_underline">True</property>
+        <signal name="activate" handler="on_menuitem_delete_activate" object="treeview_selection_file_explorer" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1514,8 +1804,9 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Download selected file</property>
-        <property name="label" translatable="yes">Download</property>
+        <property name="label" translatable="yes">Download..</property>
         <property name="use_underline">True</property>
+        <signal name="activate" handler="on_menuitem_file_download_activate" object="treeview_selection_file_explorer" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1523,17 +1814,9 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Edit permissions of selected file</property>
-        <property name="label" translatable="yes">Edit Permissions</property>
+        <property name="label" translatable="yes">Edit Permissions..</property>
         <property name="use_underline">True</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="menuitem_file_show_info">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="tooltip_text" translatable="yes">Show info of selected file</property>
-        <property name="label" translatable="yes">Show Info</property>
-        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_menuitem_permit_activate" object="treeview_selection_file_explorer" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1541,8 +1824,9 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Lock file with password</property>
-        <property name="label" translatable="yes">Lock</property>
+        <property name="label" translatable="yes">Lock..</property>
         <property name="use_underline">True</property>
+        <signal name="activate" handler="on_menuitem_file_lock_activate" object="treeview_selection_file_explorer" swapped="no"/>
       </object>
     </child>
     <child>
@@ -1550,8 +1834,45 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Unlock file with password</property>
-        <property name="label" translatable="yes">Unlock</property>
+        <property name="label" translatable="yes">Unlock..</property>
         <property name="use_underline">True</property>
+        <signal name="activate" handler="on_menuitem_file_unlock_activate" object="treeview_selection_file_explorer" swapped="no"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkMenu" id="menu_edit_permissions">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="menuitem_add">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Add..</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_menuitem_add_activate" object="dialog_give_permission" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="menuitem_remove">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Remove Selected</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_menuitem_remove_activate" object="treeview_selection_edit_permissions" swapped="no"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkMenu" id="menu_shared_file">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="menuitem_shared_file_download">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="tooltip_text" translatable="yes">Download selected file</property>
+        <property name="label" translatable="yes">Download..</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_menuitem_file_download_activate" object="treeview_selection_shared_file_explorer" swapped="no"/>
       </object>
     </child>
   </object>

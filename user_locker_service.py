@@ -81,19 +81,25 @@ def _scp_transfer(server_ip, username, password, func, src, dst):
         return 400
 
     scp_conn = scp.SCPClient(ssh_conn.get_transport())
-    if func == 'upload':
-        scp_conn.put(src, dst)
+    try:
+        if func == 'upload':
+            try:
+                scp_conn.put(src, dst)
+            except scp.SCPException:
+                return 910
 
-        # change permissions for file, so others can't access it
-        ssh_conn.exec_command('chmod o-rwx {}'.format(dst))
+        elif func == 'download':
+            try:
+                scp_conn.get(src, dst)
+            except scp.SCPException:
+                os.remove(dst)
+                return 920
 
-    elif func == 'download':
-        scp_conn.get(src, dst)
+        else:
+            return 998
 
-    else:
-        return 998
-
-    scp_conn.close()
+    finally:
+        scp_conn.close()
     return 0
 
 
