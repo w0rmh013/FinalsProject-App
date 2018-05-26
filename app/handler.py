@@ -347,6 +347,15 @@ class Handler:
         elif switched_page_num == 1:
             self.handle_exec('shared', Handler.update_treeview_shared_file_explorer)
 
+        elif switched_page_num == 2:
+            entry_current_password = self._builder.get_object('entry_current_password')
+            entry_new_password = self._builder.get_object('entry_new_password')
+            entry_confirm_password = self._builder.get_object('entry_confirm_password')
+            entry_current_password.set_text('')
+            entry_new_password.set_text('')
+            entry_confirm_password.set_text('')
+
+
     def on_imagemenuitem_logout_activate(self, applicationwindow_main):
         self.on_applicationwindow_main_destroy(applicationwindow_main)
 
@@ -370,7 +379,8 @@ class Handler:
         model, tree_iter = treeview_selection_file_explorer.get_selected()
         value = model[tree_iter][:]
 
-        self.handle_exec('delete\0{}'.format(value[1]), Handler.update_treeview_file_explorer)
+        self.handle_exec('delete\0{}'.format(value[1]), Handler.update_feedback)
+        self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
     def on_menuitem_file_download_activate(self, treeview_selection):
         filechooserdialog_transfer = self._builder.get_object('filechooserdialog_transfer')
