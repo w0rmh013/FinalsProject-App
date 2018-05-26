@@ -18,12 +18,20 @@ class Handler:
         self._icon_file = Gtk.IconTheme.get_default().load_icon('folder-documents-symbolic', 16, 0)
         self._icon_unknown = Gtk.IconTheme.get_default().load_icon('window-close-symbolic', 16, 0)
 
-    def _frmt_perm(self, x):
+    def _format_perm(self, x):
         if x.startswith('rwx'):
             return 'View, Modify'
         if x.startswith('r'):
             return 'View'
         return '---'
+
+    def _format_size(self, x):
+        x = str(x)
+        if x == '':
+            return x
+        seps = len(x) // 3
+        seps_dict = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB', 4: 'TB'}
+        return x[:-3*seps]+'.'+x[-3*seps:-3*seps+2]+seps_dict[seps]
 
     def _append_to_location_history(self, location):
         self.location_history = reduce(lambda lst, x: lst.append(x) or lst if x not in lst else lst,
@@ -39,7 +47,6 @@ class Handler:
         else:
             output = self._user.get_output()
             handler_class_func(self, output)
-            print(command, output)
 
     def update_statusbar(self, statusbar_name, context_name, status, flag=None, color=None):
         statusbar = self._builder.get_object(statusbar_name)
@@ -68,15 +75,15 @@ class Handler:
 
         for d, info in data_dict['Directories'].items():
             liststore_file_explorer.append([self._icon_folder, d, info.get('Owner', ''), info.get('Created', ''),
-                                            info.get('Last Modified', ''), str(info.get('Size', ''))])
+                                            info.get('Last Modified', ''), self._format_size(info.get('Size', ''))])
 
         for f, info in data_dict['Files'].items():
             liststore_file_explorer.append([self._icon_file, f, info.get('Owner', ''), info.get('Created', ''),
-                                            info.get('Last Modified', ''), str(info.get('Size', ''))])
+                                            info.get('Last Modified', ''), self._format_size(info.get('Size', ''))])
 
         for u, info in data_dict['Unknown Types'].items():
             liststore_file_explorer.append([self._icon_unknown, u, info.get('Owner', ''), info.get('Created', ''),
-                                            info.get('Last Modified', ''), str(info.get('Size', ''))])
+                                            info.get('Last Modified', ''), self._format_size(info.get('Size', ''))])
 
     def update_treeview_shared_file_explorer(self, data):
         data_dict = json.loads(data)
@@ -86,11 +93,12 @@ class Handler:
 
         for d, info in data_dict['Directories'].items():
             perms = info.get('My Permissions', '---')
-            liststore_shared_file_explorer.append([self._icon_folder, d, info.get('Owner', ''), self._frmt_perm(perms)])
+            liststore_shared_file_explorer.append([self._icon_folder, d, info.get('Owner', ''), self._format_perm(perms)
+                                                   ])
 
         for f, info in data_dict['Files'].items():
             perms = info.get('My Permissions', '---')
-            liststore_shared_file_explorer.append([self._icon_file, f, info.get('Owner', ''), self._frmt_perm(perms)])
+            liststore_shared_file_explorer.append([self._icon_file, f, info.get('Owner', ''), self._format_perm(perms)])
 
         for u, info in data_dict['Unknown Types'].items():
             liststore_shared_file_explorer.append([self._icon_unknown, u, info.get('Owner', ''),
@@ -106,7 +114,7 @@ class Handler:
         label_edit_permissions_file.set_text(data_dict['Path'])
 
         for u, p in data_dict['Permissions'].items():
-            liststore_edit_permissions.append([u, self._frmt_perm(p)])
+            liststore_edit_permissions.append([u, self._format_perm(p)])
 
     def update_location(self, data):
         entry_location = self._builder.get_object('entry_location')
@@ -177,6 +185,8 @@ class Handler:
             tree_selection = treeview_file_explorer.get_selection()
             model, tree_iter = tree_selection.get_selected()
             value = model[tree_iter][:]
+            if value[1] == '..' or value[1] == '.':
+                return
             if value[0] == self._icon_folder:
                 menu = self._builder.get_object('menu_drive_dir')
             elif value[0] == self._icon_file:
@@ -381,6 +391,7 @@ class Handler:
 
         self.handle_exec('delete\0{}'.format(value[1]), Handler.update_feedback)
         self.handle_exec('ls', Handler.update_treeview_file_explorer)
+        self.handle_exec('space', Handler.update_space)
 
     def on_menuitem_file_download_activate(self, treeview_selection):
         filechooserdialog_transfer = self._builder.get_object('filechooserdialog_transfer')
@@ -429,6 +440,7 @@ class Handler:
             self.handle_exec('lock\0{}\0{}'.format(name, password), Handler.update_feedback)
             self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
+        self.handle_exec('space', Handler.update_space)
         entry_enter_password.set_text('')
 
     def on_menuitem_file_unlock_activate(self, treeview_selection_file_explorer):
@@ -448,6 +460,7 @@ class Handler:
             self.handle_exec('unlock\0{}\0{}'.format(name, password), Handler.update_feedback)
             self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
+        self.handle_exec('space', Handler.update_space)
         entry_enter_password.set_text('')
 
     def on_menuitem_add_activate(self, dialog_give_permission):
@@ -484,3 +497,6 @@ class Handler:
         value = model[tree_iter][:]
         self.handle_exec('permit\0{}:---\0{}'.format(value[0], name), Handler._do_nothing)
         self.handle_exec('info\0{}'.format(name), Handler.update_treeview_edit_permissions)
+
+    def on_entry_activate(self, ok_button):
+        ok_button.clicked()
