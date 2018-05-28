@@ -25,7 +25,6 @@ class User:
         self.output = ''
 
         self._input_queue = Queue()
-        # self.output_queue = Queue()
         self._output_lock = threading.Lock()
 
     def login(self, username, password):

@@ -31,7 +31,7 @@ class Handler:
             return x
         seps = len(x) // 3
         seps_dict = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB', 4: 'TB'}
-        return x[:-3*seps]+'.'+x[-3*seps:-3*seps+2]+seps_dict[seps]
+        return x[:-3*seps]+'.'+x[-3*seps:-3*seps+2]+' '+seps_dict[seps]
 
     def _append_to_location_history(self, location):
         self.location_history = reduce(lambda lst, x: lst.append(x) or lst if x not in lst else lst,
@@ -139,16 +139,6 @@ class Handler:
         data_dict = json.loads(data)
         label_space_used_percentage = self._builder.get_object('label_space_used_percentage')
         label_space_used_percentage.set_text(data_dict['Use%'])
-
-    def update_help_detailed(self, data):
-        textview_help_detailed = self._builder.get_object('textview_help_detailed')
-        textbuffer = textview_help_detailed.get_buffer()
-        textbuffer.set_text(data)
-
-    def update_help_functions(self, data):
-        textview_help = self._builder.get_object('textview_help')
-        textbuffer = textview_help.get_buffer()
-        textbuffer.set_text(data)
 
     def on_applicationwindow_main_destroy(self, applicationwindow_main):
         self.handle_exec('logout', self._do_nothing)
@@ -295,17 +285,21 @@ class Handler:
         self.handle_exec('ls', Handler.update_treeview_file_explorer)
         self.handle_exec('space', Handler.update_space)
 
-    def on_button_create_dir_clicked(self, dialog_create_dir):
-        response = dialog_create_dir.run()
-        dialog_create_dir.hide()
-        entry_create_dir = self._builder.get_object('entry_create_dir')
+    def on_button_create_dir_clicked(self, dialog_new):
+        label_new = self._builder.get_object('label_new')
+        label_new.set_text('Enter new folder\'s name')
+        dialog_new.set_title('Create New Folder')
+
+        response = dialog_new.run()
+        dialog_new.hide()
+        entry_new = self._builder.get_object('entry_new')
         if response == Gtk.ResponseType.OK:
-            self.handle_exec('create\0{}'.format(entry_create_dir.get_text()), Handler.update_feedback)
+            self.handle_exec('create\0{}'.format(entry_new.get_text()), Handler.update_feedback)
             self.handle_exec('ls', Handler.update_treeview_file_explorer)
 
         self.handle_exec('space', Handler.update_space)
 
-        entry_create_dir.set_text('')
+        entry_new.set_text('')
 
     def on_button_upload_clicked(self, filechooserdialog_transfer):
         filechooserdialog_transfer.set_action(Gtk.FileChooserAction.OPEN)
@@ -345,9 +339,6 @@ class Handler:
         entry_new_password.set_text('')
         entry_confirm_password.set_text('')
 
-    def on_button_help_detailed_clicked(self, entry_help_function):
-        self.handle_exec('help\0{}'.format(entry_help_function.get_text()), Handler.update_help_detailed)
-
     def on_notebook_main_switch_page(self, notebook_main, switched_page, switched_page_num):
         # drive tab
         if switched_page_num == 0:
@@ -365,14 +356,8 @@ class Handler:
             entry_new_password.set_text('')
             entry_confirm_password.set_text('')
 
-
     def on_imagemenuitem_logout_activate(self, applicationwindow_main):
         self.on_applicationwindow_main_destroy(applicationwindow_main)
-
-    def on_imagemenuitem_help_activate(self, dialog_help):
-        dialog_help.set_default_size(320, 240)
-        dialog_help.run()
-        dialog_help.hide()
 
     def on_menuitem_permit_activate(self, treeview_selection_file_explorer):
         dialog_edit_permissions = self._builder.get_object('dialog_edit_permissions')
@@ -463,6 +448,30 @@ class Handler:
         self.handle_exec('space', Handler.update_space)
         entry_enter_password.set_text('')
 
+    def on_menuitem_file_rename_activate(self, treeview_selection_file_explorer):
+        model, tree_iter = treeview_selection_file_explorer.get_selected()
+        value = model[tree_iter][:]
+        if value[0] != self._icon_file:
+            return
+
+        name = value[1]
+
+        label_new = self._builder.get_object('label_new')
+        label_new.set_text('Enter new file\'s name')
+        dialog_new = self._builder.get_object('dialog_new')
+
+        dialog_new.set_title('Rename file')
+        response = dialog_new.run()
+        dialog_new.hide()
+        entry_new = self._builder.get_object('entry_new')
+        if response == Gtk.ResponseType.OK:
+            self.handle_exec('mv\0{}\0{}'.format(name, entry_new.get_text()), Handler.update_feedback)
+            self.handle_exec('ls', Handler.update_treeview_file_explorer)
+
+        self.handle_exec('space', Handler.update_space)
+
+        entry_new.set_text('')
+
     def on_menuitem_add_activate(self, dialog_give_permission):
         label_edit_permissions_file = self._builder.get_object('label_edit_permissions_file')
         name = label_edit_permissions_file.get_text()
@@ -500,3 +509,34 @@ class Handler:
 
     def on_entry_activate(self, ok_button):
         ok_button.clicked()
+
+    def on_treeview_file_explorer_drag_data_get(self, treeview_file_explorer, drag_context, data, info, time):
+        # print('DRAG DATA GET', treeview_file_explorer, drag_context, data, info, time)
+
+        tree_selection = treeview_file_explorer.get_selection()
+        model, tree_iter = tree_selection.get_selected()
+        if tree_iter is None:
+            return
+        value = model[tree_iter][:]
+
+        if value[0] == self._icon_file:
+            data.set_text(value[1], -1)
+
+    def on_treeview_file_explorer_drag_data_received(self, treeview_file_explorer, drag_context, x, y, data, info,
+                                                     timestamp):
+        # data is received when source is a file
+        tree_selection = treeview_file_explorer.get_selection()
+        path = treeview_file_explorer.get_path_at_pos(x, y-18)
+        if path is None:
+            return False
+
+        tree_selection.select_path(path[0])
+        model, tree_iter = tree_selection.get_selected()
+        value = model[tree_iter][:]
+
+        # move file only if destination is a folder
+        if value[0] == self._icon_folder:
+            src = data.get_text()
+            dst = value[1]
+            self.handle_exec('mv\0{}\0{}/'.format(src, dst), Handler.update_feedback)
+            self.handle_exec('ls', Handler.update_treeview_file_explorer)

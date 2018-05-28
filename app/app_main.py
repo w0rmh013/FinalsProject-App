@@ -4,7 +4,7 @@ import threading
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 
 
 class AppMain:
@@ -19,7 +19,13 @@ class AppMain:
 
         self._handler.handle_exec('ls', self._handler.__class__.update_treeview_file_explorer)
         self._handler.handle_exec('space', self._handler.__class__.update_space)
-        self._handler.handle_exec('help', self._handler.__class__.update_help_functions)
+
+        # set dnd
+        treeview_file_explorer = self._builder.get_object('treeview_file_explorer')
+        treeview_file_explorer.enable_model_drag_source(Gdk.ModifierType.BUTTON1_MASK, list(), Gdk.DragAction.COPY)
+        treeview_file_explorer.drag_dest_set(Gtk.DestDefaults.ALL, list(), Gdk.DragAction.COPY)
+        treeview_file_explorer.drag_dest_add_text_targets()
+        treeview_file_explorer.drag_source_add_text_targets()
 
         self._main_window = self._builder.get_object('applicationwindow_main')
         self._main_window.set_default_size(600, 450)
