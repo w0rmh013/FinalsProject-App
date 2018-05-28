@@ -20,6 +20,9 @@ class AppMain:
         self._handler.handle_exec('ls', self._handler.__class__.update_treeview_file_explorer)
         self._handler.handle_exec('space', self._handler.__class__.update_space)
 
+        filechooserdialog_transfer = self._builder.get_object('filechooserdialog_transfer')
+        filechooserdialog_transfer.set_can_default(True)
+
         # set dnd
         treeview_file_explorer = self._builder.get_object('treeview_file_explorer')
         treeview_file_explorer.enable_model_drag_source(Gdk.ModifierType.BUTTON1_MASK, list(), Gdk.DragAction.COPY)

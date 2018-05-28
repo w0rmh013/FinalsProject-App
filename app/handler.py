@@ -73,15 +73,18 @@ class Handler:
         liststore_file_explorer.append([self._icon_folder, '.', '', '', '', ''])
         liststore_file_explorer.append([self._icon_folder, '..', '', '', '', ''])
 
-        for d, info in data_dict['Directories'].items():
+        for d in sorted(data_dict['Directories'].keys()):
+            info = data_dict['Directories'][d]
             liststore_file_explorer.append([self._icon_folder, d, info.get('Owner', ''), info.get('Created', ''),
                                             info.get('Last Modified', ''), self._format_size(info.get('Size', ''))])
 
-        for f, info in data_dict['Files'].items():
+        for f in sorted(data_dict['Files'].keys()):
+            info = data_dict['Files'][f]
             liststore_file_explorer.append([self._icon_file, f, info.get('Owner', ''), info.get('Created', ''),
                                             info.get('Last Modified', ''), self._format_size(info.get('Size', ''))])
 
-        for u, info in data_dict['Unknown Types'].items():
+        for u in sorted(data_dict['Unknown Types'].keys()):
+            info = data_dict['Unknown Files'][u]
             liststore_file_explorer.append([self._icon_unknown, u, info.get('Owner', ''), info.get('Created', ''),
                                             info.get('Last Modified', ''), self._format_size(info.get('Size', ''))])
 

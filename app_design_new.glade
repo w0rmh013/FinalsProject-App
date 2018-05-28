@@ -449,7 +449,6 @@
                             <property name="spacing">2</property>
                             <property name="sizing">autosize</property>
                             <property name="title" translatable="yes">Name</property>
-                            <property name="sort_column_id">1</property>
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderer_name"/>
                               <attributes>
@@ -630,7 +629,6 @@
                           <object class="GtkTreeViewColumn" id="treeview_column_shared_name">
                             <property name="sizing">autosize</property>
                             <property name="title" translatable="yes">Name</property>
-                            <property name="sort_column_id">1</property>
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderer_shared_name"/>
                               <attributes>
