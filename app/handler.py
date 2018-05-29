@@ -124,21 +124,21 @@ class Handler:
 
     def update_location(self, data):
         entry_location = self._builder.get_object('entry_location')
-        if data == '0':
+        if data == 'OK':
             self._append_to_location_history(entry_location.get_text())
             self.update_statusbar('statusbar_action_feedback', 'feedback', 'OK', Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(0.2, 0.9, 0.2, 1.0))
         else:
             entry_location.set_text(self.location_history[0])
-            self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
+            self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR: ' + data, Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
 
     def update_feedback(self, data):
-        if data == '0':
+        if data == 'OK':
             self.update_statusbar('statusbar_action_feedback', 'feedback', 'OK', Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(0.2, 0.9, 0.2, 1.0))
         else:
-            self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
+            self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR: ' + data, Gtk.StateFlags.NORMAL,
                                   Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
 
     def update_space(self, data):
