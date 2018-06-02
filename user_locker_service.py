@@ -126,6 +126,7 @@ def run(server_ip, locker_service_port, curve, server_verifying_key):
     listener.listen(2)
 
     while True:
+        aes_key = None
         sock, addr = listener.accept()
         # auth server
         # check if connected ip is the server's ip
