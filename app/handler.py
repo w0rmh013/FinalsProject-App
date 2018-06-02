@@ -29,12 +29,20 @@ class Handler:
         x = str(x)
         if x == '':
             return x
+
         seps = len(x) // 3
-        seps_dict = {0: 'B', 1: 'KB', 2: 'MB', 3: 'GB', 4: 'TB'}
+        seps_dict = {1: 'KB', 2: 'MB', 3: 'GB', 4: 'TB'}
+
+        if seps == 0:
+            return '0.{} KB'.format(x)
+
+        seps = min(seps, max(seps_dict.keys()))
         whole = x[:-3*seps]
         if whole == '':
             whole = '0'
-        return whole+'.'+x[-3*seps:-3*seps+2]+' '+seps_dict[seps]
+        frac = x[-3*seps:-3*seps+2]
+
+        return '{}.{} {}'.format(whole, frac, seps_dict[seps])
 
     def _append_to_location_history(self, location):
         self.location_history = reduce(lambda lst, x: lst.append(x) or lst if x not in lst else lst,
