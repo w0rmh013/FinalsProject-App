@@ -141,9 +141,9 @@ def run(server_ip, locker_service_port, curve, server_verifying_key):
             continue
 
         # receive parameters for scp transfer
-        encrypted_scp_params = sock.recv(4096).decode()
+        encrypted_scp_params = sock.recv(4096)
         # e.g. user1\0user1pass\0upload\0C:\\test.txt\0/dir1/up_test.txt
-        raw_scp_params = aes_key.decrypt(encrypted_scp_params)
+        raw_scp_params = aes_key.decrypt(encrypted_scp_params).decode()
 
         username, password, func, src, dst = raw_scp_params.split('\0')
         scp_ret = _scp_transfer(addr[0], username, password, func, src, dst)

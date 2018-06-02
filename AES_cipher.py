@@ -11,7 +11,7 @@ class AESCipher(object):
         self._key = SHA256.new(key).digest()
 
     def _pad(self, s):
-        return s + (self._bs - len(s) % self._bs) * chr(self._bs - len(s) % self._bs)
+        return s + ((self._bs - len(s) % self._bs) * chr(self._bs - len(s) % self._bs)).encode()
 
     @staticmethod
     def _unpad(s):
@@ -27,7 +27,7 @@ class AESCipher(object):
         data = self._pad(data)
         iv = Random.new().read(AES.block_size)  # initialization vector
         cipher = AES.new(self._key, AES.MODE_CBC, iv)
-        return base64.b64encode(iv + cipher.encrypt(data)).decode()
+        return base64.b64encode(iv + cipher.encrypt(data))
 
     def decrypt(self, encrypted_data):
         """
@@ -39,7 +39,7 @@ class AESCipher(object):
         enc = base64.b64decode(encrypted_data)
         iv = enc[:AES.block_size]
         cipher = AES.new(self._key, AES.MODE_CBC, iv)
-        return self._unpad(cipher.decrypt(enc[AES.block_size:])).decode()
+        return self._unpad(cipher.decrypt(enc[AES.block_size:]))
 
     def __str__(self):
         return bytes.hex(self._key)
