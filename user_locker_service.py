@@ -153,8 +153,8 @@ def run(server_ip, locker_service_port, curve, server_verifying_key):
 
 def main():
     if len(sys.argv) < 5:
-        print('Usage:', 'python3', 'user_locker_service.py', '<ServerIP>', '<LockerServicePort>', '<Curve>',
-              '<ServerVerifyingKey>')
+        print(' '.join(['Usage:', 'python3', 'user_locker_service.py', '<ServerIP>', '<LockerServicePort>', '<Curve>',
+              '<ServerVerifyingKey>']))
         sys.exit(1)
 
     locker_service_thread = threading.Thread(target=run, args=(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]))
