@@ -46,8 +46,8 @@ class User:
         self.logged_in = True
         self.username = username
 
-        self._locker_service_proc = subprocess.Popen(['python3', 'user_locker_service.py', self._ip, self._local_port,
-                                                      self._curve, self._server_verifying_key])
+        self._locker_service_proc = subprocess.Popen(['build/exe.win-amd64-3.6/user_locker_service.exe', self._ip,
+                                                      self._local_port, self._curve, self._server_verifying_key])
 
         return True
 

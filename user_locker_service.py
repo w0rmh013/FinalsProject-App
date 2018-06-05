@@ -2,6 +2,7 @@
 import base64
 from ecdsa.keys import SigningKey, VerifyingKey
 from ecdsa import curves, util, ellipticcurve
+import json
 import os
 import paramiko
 import re
@@ -153,9 +154,12 @@ def run(server_ip, locker_service_port, curve, server_verifying_key):
 
 def main():
     if len(sys.argv) < 5:
-        print(' '.join(['Usage:', 'python3', 'user_locker_service.py', '<ServerIP>', '<LockerServicePort>', '<Curve>',
-              '<ServerVerifyingKey>']))
-        sys.exit(1)
+        with open('locker_server_params.json', 'r') as f:
+            params = json.load(f)
+        locker_service_thread = threading.Thread(target=run, args=(params['ServerIP'], params['LockerServicePort'],
+                                                                   params['Curve'], params['ServerVerifyingKey']))
+        locker_service_thread.run()
+        sys.exit(0)
 
     locker_service_thread = threading.Thread(target=run, args=(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]))
     locker_service_thread.run()
