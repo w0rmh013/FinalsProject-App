@@ -11,7 +11,7 @@ from gi.repository import Gtk
 
 def main():
     builder = Gtk.Builder()
-    builder.add_from_file('app_design_new.glade')
+    builder.add_from_file('app_design.glade')
 
     with open('locker_server_params.json', 'r') as f:
         params = json.load(f)
