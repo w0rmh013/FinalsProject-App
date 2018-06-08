@@ -9,7 +9,6 @@ import re
 import scp
 import socket
 import sys
-import threading
 
 from AES_cipher import AESCipher
 
@@ -156,13 +155,10 @@ def main():
     if len(sys.argv) < 5:
         with open('locker_server_params.json', 'r') as f:
             params = json.load(f)
-        locker_service_thread = threading.Thread(target=run, args=(params['ServerIP'], params['LockerServicePort'],
-                                                                   params['Curve'], params['ServerVerifyingKey']))
-        locker_service_thread.run()
+        run(params['ServerIP'], params['LockerServicePort'], params['Curve'], params['ServerVerifyingKey'])
         sys.exit(0)
 
-    locker_service_thread = threading.Thread(target=run, args=(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]))
-    locker_service_thread.run()
+    run(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
     sys.exit(0)
 
 
