@@ -189,6 +189,8 @@ class Handler:
         if event.type == Gdk.EventType.BUTTON_RELEASE and event.button == 3:
             tree_selection = treeview_file_explorer.get_selection()
             model, tree_iter = tree_selection.get_selected()
+            if tree_iter is None:
+                return
             value = model[tree_iter][:]
             if value[1] == '..' or value[1] == '.':
                 return
