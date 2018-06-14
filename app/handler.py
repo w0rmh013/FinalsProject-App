@@ -57,6 +57,7 @@ class Handler:
             self._user.logged_in = False
         else:
             output = self._user.get_output()
+            print('COMMAND', command, 'OUTPUT', output)
             handler_class_func(self, output)
 
     def update_statusbar(self, statusbar_name, context_name, status, flag=None, color=None):
@@ -68,11 +69,11 @@ class Handler:
         statusbar.push(context, status)
 
     def update_treeview_file_explorer(self, data):
-        data_dict = json.loads(data)
-        if type(data_dict) is not dict:
-            if type(data_dict) is int:
-                self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
-                                      Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
+        try:
+            data_dict = json.loads(data)
+        except ValueError:
+            self.update_statusbar('statusbar_action_feedback', 'feedback', 'ERROR ' + data, Gtk.StateFlags.NORMAL,
+                                  Gdk.RGBA(1.0, 0.0, 0.0, 1.0))
             return
         liststore_file_explorer = self._builder.get_object('liststore_file_explorer')
         liststore_file_explorer.clear()
@@ -223,7 +224,7 @@ class Handler:
                 notebook_main.set_current_page(0)
 
                 self.handle_exec('cd\0{}'.format(new_location), Handler.update_location)
-                self.handle_exec('ls', Handler.update_treeview_file_explorer)
+                self.handle_exec('ls\0{}'.format(new_location), Handler.update_treeview_file_explorer)
 
     def on_treeview_shared_file_explorer_button_release_event(self, treeview_shared_file_explorer, event):
         if event.type == Gdk.EventType.BUTTON_RELEASE and event.button == 3:
