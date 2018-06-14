@@ -18,14 +18,16 @@ class Handler:
         self._icon_file = Gtk.IconTheme.get_default().load_icon('folder-documents-symbolic', 16, 0)
         self._icon_unknown = Gtk.IconTheme.get_default().load_icon('window-close-symbolic', 16, 0)
 
-    def _format_perm(self, x):
+    @staticmethod
+    def _format_perm(x):
         if x.startswith('rwx'):
             return 'View, Modify'
         if x.startswith('r'):
             return 'View'
         return '---'
 
-    def _format_size(self, x):
+    @staticmethod
+    def _format_size(x):
         x = str(x)
         if x == '':
             return x
