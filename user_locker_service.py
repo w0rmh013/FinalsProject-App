@@ -92,7 +92,10 @@ def _scp_transfer(server_ip, username, password, func, src, dst):
             try:
                 scp_conn.get(src, dst)
             except scp.SCPException:
-                os.remove(dst)
+                try:
+                    os.remove(dst)
+                except FileNotFoundError:
+                    return 905
                 return 920
 
         else:

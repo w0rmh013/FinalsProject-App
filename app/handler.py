@@ -57,7 +57,7 @@ class Handler:
             self._user.logged_in = False
         else:
             output = self._user.get_output()
-            print('COMMAND', command, 'OUTPUT', output)
+            # print('COMMAND', command, 'OUTPUT', output)
             handler_class_func(self, output)
 
     def update_statusbar(self, statusbar_name, context_name, status, flag=None, color=None):
